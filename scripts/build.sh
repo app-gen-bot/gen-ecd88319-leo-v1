@@ -1,14 +1,14 @@
 #!/bin/bash
 # ============================================
-# Leo SaaS - Fast Local Build
+# Leo SaaS - Fast Local Build (Mono-Repo)
 # ============================================
 # Builds Leo Container and Leo SaaS for local development (native arch only).
-# For production deployment, use deploy-ecs.sh which builds AMD64 via GitHub Actions.
+# For production deployment, use deploy-ecs.sh which builds AMD64.
 #
 # Usage:
 #   ./scripts/build.sh              # Build both (default)
-#   ./scripts/build.sh --container  # Only Leo Container
-#   ./scripts/build.sh --saas       # Only Leo SaaS
+#   ./scripts/build.sh --container  # Only Leo Container (leo-worker)
+#   ./scripts/build.sh --saas       # Only Leo SaaS (leo-web)
 #   ./scripts/run-leo.sh            # Run after building
 
 set -e
@@ -17,17 +17,15 @@ set -e
 # Configuration
 # ============================================
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$HOME/WORK/LEO/saas-dev-agent"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_STATE="$PROJECT_DIR/.build-state"
 LOGS_DIR="$PROJECT_DIR/logs/builds"
 
-# Repo paths and branches
-LEO_SAAS_DIR="$PROJECT_DIR/repos/gen-219eda6b-032862af"
-LEO_SAAS_BRANCH="main"
-LEO_CONTAINER_DIR="$PROJECT_DIR/repos/app-factory"
-LEO_CONTAINER_BRANCH="feat/efs"
+# Mono-repo paths (no separate repos, no branches)
+LEO_WEB_DIR="$PROJECT_DIR/leo-web"
+LEO_WORKER_DIR="$PROJECT_DIR/leo-worker"
 
-# Image names
+# Image names (keeping original names for compatibility)
 LEO_CONTAINER_IMAGE="leo-container"
 LEO_SAAS_IMAGE="leo-saas-generated"
 
@@ -74,8 +72,8 @@ for arg in "$@"; do
         --no-cache) NO_CACHE="--no-cache" ;;
         --help|-h)
             echo "Usage: $0 [--container] [--saas] [--no-cache]"
-            echo "  --container  Only build Leo Container"
-            echo "  --saas       Only build Leo SaaS"
+            echo "  --container  Only build Leo Container (leo-worker)"
+            echo "  --saas       Only build Leo SaaS (leo-web)"
             echo "  --no-cache   Force rebuild without Docker cache"
             echo "  (default)    Build both"
             exit 0
@@ -96,45 +94,37 @@ BUILD_START_TIME=$(date +%s)
 
 echo ""
 echo "=============================================="
-echo "  Leo SaaS - Fast Local Build"
+echo "  Leo SaaS - Fast Local Build (Mono-Repo)"
 echo "=============================================="
 echo ""
 
-# Track commits for summary
-LEO_CONTAINER_COMMIT=""
-LEO_SAAS_COMMIT=""
+# ============================================
+# Pre-flight: Check for uncommitted changes
+# ============================================
+cd "$PROJECT_DIR"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+    log_error "Uncommitted changes! Commit first:"
+    git status --short
+    exit 1
+fi
+
+# Get mono-repo commit info (shared by both components)
+COMMIT=$(git rev-parse --short HEAD)
+FULL_COMMIT=$(git rev-parse HEAD)
+REPO_URL=$(git remote get-url origin 2>/dev/null || echo "local")
+REPO_NAME=$(basename "$REPO_URL" .git)
+BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+BUILD_HOST=$(hostname)
+
+log_info "Building $REPO_NAME @ $COMMIT"
 
 # ============================================
-# Build Leo Container
+# Build Leo Container (from leo-worker/)
 # ============================================
 build_leo_container() {
-    log_step "Building Leo Container..."
+    log_step "Building Leo Container (leo-worker)..."
     echo "----------------------------------------------"
-
-    cd "$LEO_CONTAINER_DIR"
-
-    # Fetch and checkout
-    git fetch origin --quiet
-
-    # Check for uncommitted changes
-    if [[ -n "$(git status --porcelain)" ]]; then
-        log_error "Uncommitted changes in app-factory! Commit and push first:"
-        git status --short
-        exit 1
-    fi
-
-    git checkout "$LEO_CONTAINER_BRANCH" --quiet
-    git pull origin "$LEO_CONTAINER_BRANCH" --quiet
-
-    # Get commit info
-    local COMMIT=$(git rev-parse --short HEAD)
-    local FULL_COMMIT=$(git rev-parse HEAD)
-    local REPO_URL=$(git remote get-url origin 2>/dev/null || echo "unknown")
-    local REPO_NAME=$(basename "$REPO_URL" .git)
-    local BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    local BUILD_HOST=$(hostname)
-
-    log_info "Building $REPO_NAME @ $COMMIT"
 
     # Generate build manifest
     local BUILD_MANIFEST=$(cat <<EOF
@@ -143,7 +133,7 @@ build_leo_container() {
   "commitFull": "$FULL_COMMIT",
   "repo": "$REPO_NAME",
   "repoUrl": "$REPO_URL",
-  "branch": "$LEO_CONTAINER_BRANCH",
+  "branch": "main",
   "buildTime": "$BUILD_TIME",
   "buildHost": "$BUILD_HOST",
   "architecture": "native",
@@ -157,57 +147,30 @@ EOF
         --build-arg BUILD_MANIFEST="$BUILD_MANIFEST" \
         -t "$LEO_CONTAINER_IMAGE:$COMMIT-$IMAGE_ARCH" \
         -t "$LEO_CONTAINER_IMAGE:latest-$IMAGE_ARCH" \
-        "$LEO_CONTAINER_DIR/leo-container"
+        "$LEO_WORKER_DIR"
 
     log_success "$LEO_CONTAINER_IMAGE:$COMMIT-$IMAGE_ARCH"
 
-    # Update Leo SaaS .env.local with the new container image
-    local LEO_SAAS_ENV="$LEO_SAAS_DIR/.env.local"
-    if [[ -f "$LEO_SAAS_ENV" ]]; then
+    # Update leo-web .env.local with the new container image
+    local LEO_WEB_ENV="$LEO_WEB_DIR/.env.local"
+    if [[ -f "$LEO_WEB_ENV" ]]; then
         local NEW_IMAGE="$LEO_CONTAINER_IMAGE:$COMMIT-$IMAGE_ARCH"
-        if grep -q "^GENERATOR_IMAGE=" "$LEO_SAAS_ENV"; then
-            sed -i.bak "s|^GENERATOR_IMAGE=.*|GENERATOR_IMAGE=$NEW_IMAGE|" "$LEO_SAAS_ENV"
-            rm -f "${LEO_SAAS_ENV}.bak"
+        if grep -q "^GENERATOR_IMAGE=" "$LEO_WEB_ENV"; then
+            sed -i.bak "s|^GENERATOR_IMAGE=.*|GENERATOR_IMAGE=$NEW_IMAGE|" "$LEO_WEB_ENV"
+            rm -f "${LEO_WEB_ENV}.bak"
         else
-            echo "GENERATOR_IMAGE=$NEW_IMAGE" >> "$LEO_SAAS_ENV"
+            echo "GENERATOR_IMAGE=$NEW_IMAGE" >> "$LEO_WEB_ENV"
         fi
         log_info "Updated .env.local GENERATOR_IMAGE=$NEW_IMAGE"
     fi
-
-    LEO_CONTAINER_COMMIT="$COMMIT"
 }
 
 # ============================================
-# Build Leo SaaS
+# Build Leo SaaS (from leo-web/)
 # ============================================
 build_leo_saas() {
-    log_step "Building Leo SaaS..."
+    log_step "Building Leo SaaS (leo-web)..."
     echo "----------------------------------------------"
-
-    cd "$LEO_SAAS_DIR"
-
-    # Fetch and checkout
-    git fetch origin --quiet
-
-    # Check for uncommitted changes
-    if [[ -n "$(git status --porcelain)" ]]; then
-        log_error "Uncommitted changes in Leo SaaS! Commit and push first:"
-        git status --short
-        exit 1
-    fi
-
-    git checkout "$LEO_SAAS_BRANCH" --quiet
-    git pull origin "$LEO_SAAS_BRANCH" --quiet
-
-    # Get commit info
-    local COMMIT=$(git rev-parse --short HEAD)
-    local FULL_COMMIT=$(git rev-parse HEAD)
-    local REPO_URL=$(git remote get-url origin 2>/dev/null || echo "unknown")
-    local REPO_NAME=$(basename "$REPO_URL" .git)
-    local BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    local BUILD_HOST=$(hostname)
-
-    log_info "Building $REPO_NAME @ $COMMIT"
 
     # Fetch build-time secrets from AWS Secrets Manager (No FAF policy)
     log_info "Fetching secrets from AWS Secrets Manager..."
@@ -243,7 +206,7 @@ build_leo_saas() {
   "commitFull": "$FULL_COMMIT",
   "repo": "$REPO_NAME",
   "repoUrl": "$REPO_URL",
-  "branch": "$LEO_SAAS_BRANCH",
+  "branch": "main",
   "buildTime": "$BUILD_TIME",
   "buildHost": "$BUILD_HOST",
   "architecture": "native",
@@ -262,20 +225,18 @@ EOF
         --build-arg BUILD_MANIFEST="$BUILD_MANIFEST" \
         -t "$LEO_SAAS_IMAGE:$COMMIT-$IMAGE_ARCH" \
         -t "$LEO_SAAS_IMAGE:latest-$IMAGE_ARCH" \
-        "$LEO_SAAS_DIR"
+        "$LEO_WEB_DIR"
 
     log_success "$LEO_SAAS_IMAGE:$COMMIT-$IMAGE_ARCH"
 
     # Run database migrations (silent)
     log_info "Running database migrations..."
-    cd "$LEO_SAAS_DIR"
-    if [[ ! -d "$LEO_SAAS_DIR/node_modules" ]]; then
+    cd "$LEO_WEB_DIR"
+    if [[ ! -d "$LEO_WEB_DIR/node_modules" ]]; then
         npm install --silent >/dev/null 2>&1
     fi
     npx drizzle-kit push --force >/dev/null 2>&1 || true
     log_success "Migrations complete"
-
-    LEO_SAAS_COMMIT="$COMMIT"
 }
 
 # ============================================
@@ -315,20 +276,12 @@ if $BUILD_SAAS; then
 fi
 
 # Write .build-state for deploy-ecs.sh
-BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-# Get commits if we didn't build them this run
-if [[ -z "$LEO_CONTAINER_COMMIT" ]]; then
-    LEO_CONTAINER_COMMIT=$(cd "$LEO_CONTAINER_DIR" && git rev-parse --short HEAD)
-fi
-if [[ -z "$LEO_SAAS_COMMIT" ]]; then
-    LEO_SAAS_COMMIT=$(cd "$LEO_SAAS_DIR" && git rev-parse --short HEAD)
-fi
-
+# In mono-repo, both components share the same commit
 cat > "$BUILD_STATE" << EOF
-LEO_CONTAINER=$LEO_CONTAINER_COMMIT
-LEO_SAAS=$LEO_SAAS_COMMIT
+LEO_CONTAINER=$COMMIT
+LEO_SAAS=$COMMIT
 BUILD_TIME=$BUILD_TIME
+IMAGE_ARCH=$IMAGE_ARCH
 EOF
 
 # Report disk usage
@@ -347,10 +300,14 @@ echo "=============================================="
 echo -e "${GREEN}  BUILD COMPLETE${NC}"
 echo "=============================================="
 echo ""
-echo "  Leo Container: $LEO_CONTAINER_COMMIT"
-echo "  Leo SaaS:      $LEO_SAAS_COMMIT"
+echo "  Commit:        $COMMIT"
+echo "  Architecture:  $IMAGE_ARCH"
 echo "  Build Time:    $BUILD_TIME"
 echo "  Elapsed:       ${ELAPSED_MIN}m ${ELAPSED_SEC}s"
+echo ""
+echo "  Images:"
+echo "    $LEO_CONTAINER_IMAGE:$COMMIT-$IMAGE_ARCH"
+echo "    $LEO_SAAS_IMAGE:$COMMIT-$IMAGE_ARCH"
 echo ""
 echo "  State saved to .build-state"
 echo "  To run locally: ./scripts/run-leo.sh"

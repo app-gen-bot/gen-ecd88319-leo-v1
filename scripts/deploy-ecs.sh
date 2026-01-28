@@ -1,28 +1,26 @@
 #!/bin/bash
 # ============================================
-# Leo SaaS - Deploy to ECS
+# Leo SaaS - Deploy to ECS (Mono-Repo)
 # ============================================
 # Builds AMD64 images, pushes to ECR, deploys to ECS.
 # Usage: ./scripts/deploy-ecs.sh
 #
 # Prerequisites:
 #   - AWS credentials configured (aws sso login --profile jake-dev)
-#   - .build-state exists with LEO_CONTAINER and LEO_SAAS commits
+#   - .build-state exists (run ./scripts/build.sh first)
 #   - Docker running
 
 set -e
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$HOME/WORK/LEO/saas-dev-agent"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_STATE="$PROJECT_DIR/.build-state"
 LOGS_DIR="$PROJECT_DIR/logs/deploys"
 
-# Repo paths for building
-LEO_CONTAINER_DIR="$PROJECT_DIR/repos/app-factory"
-LEO_CONTAINER_BRANCH="feat/efs"
-LEO_SAAS_DIR="$PROJECT_DIR/repos/gen-219eda6b-032862af"
-LEO_SAAS_BRANCH="main"
+# Mono-repo paths
+LEO_WEB_DIR="$PROJECT_DIR/leo-web"
+LEO_WORKER_DIR="$PROJECT_DIR/leo-worker"
 
 # Setup logging (output to terminal AND log file)
 mkdir -p "$LOGS_DIR"
@@ -65,25 +63,18 @@ build_amd64_images() {
     log_step "Building AMD64 images for Fargate..."
     echo "----------------------------------------------"
 
-    # Build Leo Container (AMD64)
-    log_info "Building Leo Container (AMD64)..."
-    cd "$LEO_CONTAINER_DIR"
-    git fetch origin --quiet
-    git checkout "$LEO_CONTAINER_BRANCH" --quiet
-    git pull origin "$LEO_CONTAINER_BRANCH" --quiet
+    cd "$PROJECT_DIR"
 
+    # Build Leo Container (AMD64) from leo-worker/
+    log_info "Building Leo Container (AMD64) from leo-worker/..."
     docker build --platform linux/amd64 \
         -t "leo-container:${LEO_CONTAINER}-amd64" \
-        "$LEO_CONTAINER_DIR/leo-container"
+        "$LEO_WORKER_DIR"
 
     log_success "leo-container:${LEO_CONTAINER}-amd64"
 
-    # Build Leo SaaS (AMD64)
-    log_info "Building Leo SaaS (AMD64)..."
-    cd "$LEO_SAAS_DIR"
-    git fetch origin --quiet
-    git checkout "$LEO_SAAS_BRANCH" --quiet
-    git pull origin "$LEO_SAAS_BRANCH" --quiet
+    # Build Leo SaaS (AMD64) from leo-web/
+    log_info "Building Leo SaaS (AMD64) from leo-web/..."
 
     # Fetch build-time secrets from AWS Secrets Manager
     local VITE_SUPABASE_URL=$(aws secretsmanager get-secret-value \
@@ -107,10 +98,9 @@ build_amd64_images() {
         --build-arg VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
         --build-arg VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
         -t "leo-saas-generated:${LEO_SAAS}-amd64" \
-        "$LEO_SAAS_DIR"
+        "$LEO_WEB_DIR"
 
     log_success "leo-saas-generated:${LEO_SAAS}-amd64"
-    cd "$PROJECT_DIR"
 }
 
 # Push images to ECR
@@ -148,6 +138,7 @@ fi
 
 source "$BUILD_STATE"
 
+# In mono-repo, LEO_CONTAINER and LEO_SAAS are the same commit
 if [[ -z "$LEO_CONTAINER" || -z "$LEO_SAAS" ]]; then
     log_error ".build-state is invalid (missing commits)"
     log_error "Run ./scripts/build.sh first"
@@ -159,12 +150,11 @@ fi
 # ============================================
 echo ""
 echo "=============================================="
-echo -e "${CYAN}  DEPLOYING VERSIONS${NC}"
+echo -e "${CYAN}  DEPLOYING VERSIONS (Mono-Repo)${NC}"
 echo "=============================================="
 echo ""
-echo "  Leo Container: $LEO_CONTAINER"
-echo "  Leo SaaS:      $LEO_SAAS"
-echo "  Built:         $BUILD_TIME"
+echo "  Commit:      $LEO_CONTAINER"
+echo "  Built:       $BUILD_TIME"
 echo ""
 echo "=============================================="
 echo ""
@@ -351,7 +341,6 @@ ECS_SERVICE_ARN=$(aws ecs list-services \
 
 if [[ -z "$ECS_SERVICE_ARN" || "$ECS_SERVICE_ARN" == "None" ]]; then
     log_error "No ECS service found in cluster $ECS_CLUSTER"
-    log_error "Run CDK deploy first: cd repos/app-factory/infrastructure && ./scripts/deploy.sh"
     exit 1
 fi
 
@@ -371,7 +360,6 @@ SERVICE_STATUS=$(aws ecs describe-services \
 
 if [[ "$SERVICE_STATUS" != "ACTIVE" ]]; then
     log_error "ECS service $ECS_SERVICE is not active (status: $SERVICE_STATUS)"
-    log_error "Run CDK deploy first: cd repos/app-factory/infrastructure && ./scripts/deploy.sh"
     exit 1
 fi
 log_success "Service is active"
@@ -467,8 +455,6 @@ fi
 # ============================================
 # Kill Stale Generator Tasks
 # ============================================
-# Generator tasks may be running with old images. New generations would reuse
-# these stale tasks instead of spawning fresh ones with the new image.
 echo ""
 log_info "Checking for stale generator tasks..."
 
