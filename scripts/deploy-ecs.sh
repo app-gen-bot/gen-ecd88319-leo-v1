@@ -3,52 +3,25 @@
 # Leo SaaS - Deploy to ECS
 # ============================================
 # Builds AMD64 images, pushes to ECR, deploys to ECS.
-#
-# Usage:
-#   ./scripts/deploy-ecs.sh          # default: prod db + leo agent (production)
-#   ./scripts/deploy-ecs.sh --test   # dev db + simple agent (infra testing)
+# Usage: ./scripts/deploy-ecs.sh
 #
 # Prerequisites:
 #   - AWS credentials configured (aws sso login --profile jake-dev)
-#   - .build-state exists with COMMIT
+#   - .build-state exists with LEO_CONTAINER and LEO_SAAS commits
 #   - Docker running
 
 set -e
 
-# ============================================
-# Parse Arguments
-# ============================================
-TEST_MODE=false
-DB_ENV="prod"
-AGENT_MODE="leo"
-
-for arg in "$@"; do
-    case $arg in
-        --test)
-            TEST_MODE=true
-            DB_ENV="dev"
-            AGENT_MODE="simple"
-            ;;
-        --help|-h)
-            echo "Usage: $0 [--test]"
-            echo ""
-            echo "  (default)   Deploy prod db + leo agent to production"
-            echo "  --test      Deploy dev db + simple agent for infra testing"
-            exit 0
-            ;;
-    esac
-done
-
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"  # Repo root (gen-ecd88319-leo-v2)
+PROJECT_DIR="$HOME/WORK/LEO/saas-dev-agent"
 BUILD_STATE="$PROJECT_DIR/.build-state"
 LOGS_DIR="$PROJECT_DIR/logs/deploys"
 
-# Repo paths - SELF-REFERENTIAL (build from THIS repo)
-LEO_CONTAINER_DIR="$PROJECT_DIR/leo-worker"
-LEO_CONTAINER_BRANCH="main"
-LEO_SAAS_DIR="$PROJECT_DIR/leo-web"
+# Repo paths for building
+LEO_CONTAINER_DIR="$PROJECT_DIR/repos/app-factory"
+LEO_CONTAINER_BRANCH="feat/efs"
+LEO_SAAS_DIR="$PROJECT_DIR/repos/gen-219eda6b-032862af"
 LEO_SAAS_BRANCH="main"
 
 # Setup logging (output to terminal AND log file)
@@ -68,9 +41,6 @@ CLOUDFRONT_URL="https://d386l1mt30903c.cloudfront.net"
 # Polling settings
 DEPLOY_TIMEOUT=600   # 10 minutes for ECS deploy
 POLL_INTERVAL=10
-
-# Build timestamp (used in manifests)
-BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -92,94 +62,54 @@ log_step() { echo -e "${CYAN}[STEP]${NC} $1"; }
 
 # Build AMD64 images for Fargate deployment
 build_amd64_images() {
-    log_step "Building AMD64 images for Fargate ($DB_ENV + $AGENT_MODE)..."
+    log_step "Building AMD64 images for Fargate..."
     echo "----------------------------------------------"
 
-    # Determine secrets prefix based on DB_ENV
-    if [[ "$DB_ENV" == "dev" ]]; then
-        SECRETS_PREFIX="leo-dev"
-    else
-        SECRETS_PREFIX="leo"
-    fi
-
-    # Build Leo Worker (AMD64)
-    log_info "Building leo-worker ($AGENT_MODE) AMD64..."
-    cd "$PROJECT_DIR"
-    git pull origin main --quiet 2>/dev/null || true
-
-    local FULL_COMMIT=$(git rev-parse HEAD)
-    local REPO_URL=$(git remote get-url origin 2>/dev/null || echo "unknown")
-    local REPO_NAME=$(basename "$REPO_URL" .git)
-
-    local WORKER_MANIFEST=$(cat <<EOF
-{
-  "commit": "$COMMIT",
-  "commitFull": "$FULL_COMMIT",
-  "repo": "$REPO_NAME",
-  "repoUrl": "$REPO_URL",
-  "branch": "main",
-  "buildTime": "$BUILD_TIME",
-  "buildHost": "$(hostname)",
-  "architecture": "amd64",
-  "component": "leo-worker",
-  "agentMode": "$AGENT_MODE"
-}
-EOF
-)
+    # Build Leo Container (AMD64)
+    log_info "Building Leo Container (AMD64)..."
+    cd "$LEO_CONTAINER_DIR"
+    git fetch origin --quiet
+    git checkout "$LEO_CONTAINER_BRANCH" --quiet
+    git pull origin "$LEO_CONTAINER_BRANCH" --quiet
 
     docker build --platform linux/amd64 \
-        --build-arg AGENT_MODE="$AGENT_MODE" \
-        --build-arg BUILD_MANIFEST="$WORKER_MANIFEST" \
-        -t "leo-worker:${COMMIT}-amd64-${AGENT_MODE}" \
-        "$LEO_WORKER_DIR"
+        -t "leo-container:${LEO_CONTAINER}-amd64" \
+        "$LEO_CONTAINER_DIR/leo-container"
 
-    log_success "leo-worker:${COMMIT}-amd64-${AGENT_MODE}"
+    log_success "leo-container:${LEO_CONTAINER}-amd64"
 
-    # Build Leo Web (AMD64)
-    log_info "Building leo-web ($DB_ENV) AMD64..."
+    # Build Leo SaaS (AMD64)
+    log_info "Building Leo SaaS (AMD64)..."
+    cd "$LEO_SAAS_DIR"
+    git fetch origin --quiet
+    git checkout "$LEO_SAAS_BRANCH" --quiet
+    git pull origin "$LEO_SAAS_BRANCH" --quiet
 
     # Fetch build-time secrets from AWS Secrets Manager
     local VITE_SUPABASE_URL=$(aws secretsmanager get-secret-value \
-        --secret-id "${SECRETS_PREFIX}/supabase-url" \
+        --secret-id leo/supabase-url \
         --region "$AWS_REGION" \
         --profile "$AWS_PROFILE" \
         --query SecretString --output text 2>/dev/null)
 
     local VITE_SUPABASE_ANON_KEY=$(aws secretsmanager get-secret-value \
-        --secret-id "${SECRETS_PREFIX}/supabase-anon-key" \
+        --secret-id leo/supabase-anon-key \
         --region "$AWS_REGION" \
         --profile "$AWS_PROFILE" \
         --query SecretString --output text 2>/dev/null)
 
     if [[ -z "$VITE_SUPABASE_URL" || "$VITE_SUPABASE_URL" == "null" ]]; then
-        log_error "Failed to fetch ${SECRETS_PREFIX}/supabase-url"
+        log_error "Failed to fetch leo/supabase-url"
         exit 1
     fi
-
-    local WEB_MANIFEST=$(cat <<EOF
-{
-  "commit": "$COMMIT",
-  "commitFull": "$FULL_COMMIT",
-  "repo": "$REPO_NAME",
-  "repoUrl": "$REPO_URL",
-  "branch": "main",
-  "buildTime": "$BUILD_TIME",
-  "buildHost": "$(hostname)",
-  "architecture": "amd64",
-  "component": "leo-web",
-  "dbEnv": "$DB_ENV"
-}
-EOF
-)
 
     docker build --platform linux/amd64 \
         --build-arg VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
         --build-arg VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
-        --build-arg BUILD_MANIFEST="$WEB_MANIFEST" \
-        -t "leo-web:${COMMIT}-amd64-${DB_ENV}" \
-        "$LEO_WEB_DIR"
+        -t "leo-saas-generated:${LEO_SAAS}-amd64" \
+        "$LEO_SAAS_DIR"
 
-    log_success "leo-web:${COMMIT}-amd64-${DB_ENV}"
+    log_success "leo-saas-generated:${LEO_SAAS}-amd64"
     cd "$PROJECT_DIR"
 }
 
@@ -194,21 +124,17 @@ push_to_ecr() {
         docker login --username AWS --password-stdin "$ECR_REGISTRY"
     log_success "ECR authentication successful"
 
-    # ECR tags include mode for traceability
-    local WORKER_ECR_TAG="${COMMIT}-${AGENT_MODE}"
-    local WEB_ECR_TAG="${COMMIT}-${DB_ENV}"
+    # Push Leo Container
+    log_info "Pushing Leo Container..."
+    docker tag "leo-container:${LEO_CONTAINER}-amd64" "${ECR_REGISTRY}/leo:${LEO_CONTAINER}"
+    docker push "${ECR_REGISTRY}/leo:${LEO_CONTAINER}"
+    log_success "leo:${LEO_CONTAINER}"
 
-    # Push Leo Worker
-    log_info "Pushing leo-worker..."
-    docker tag "leo-worker:${COMMIT}-amd64-${AGENT_MODE}" "${ECR_REGISTRY}/leo-worker:${WORKER_ECR_TAG}"
-    docker push "${ECR_REGISTRY}/leo-worker:${WORKER_ECR_TAG}"
-    log_success "leo-worker:${WORKER_ECR_TAG}"
-
-    # Push Leo Web
-    log_info "Pushing leo-web..."
-    docker tag "leo-web:${COMMIT}-amd64-${DB_ENV}" "${ECR_REGISTRY}/leo-web:${WEB_ECR_TAG}"
-    docker push "${ECR_REGISTRY}/leo-web:${WEB_ECR_TAG}"
-    log_success "leo-web:${WEB_ECR_TAG}"
+    # Push Leo SaaS
+    log_info "Pushing Leo SaaS..."
+    docker tag "leo-saas-generated:${LEO_SAAS}-amd64" "${ECR_REGISTRY}/leo-saas-app:${LEO_SAAS}"
+    docker push "${ECR_REGISTRY}/leo-saas-app:${LEO_SAAS}"
+    log_success "leo-saas-app:${LEO_SAAS}"
 }
 
 # ============================================
@@ -222,8 +148,8 @@ fi
 
 source "$BUILD_STATE"
 
-if [[ -z "$COMMIT" ]]; then
-    log_error ".build-state is invalid (missing COMMIT)"
+if [[ -z "$LEO_CONTAINER" || -z "$LEO_SAAS" ]]; then
+    log_error ".build-state is invalid (missing commits)"
     log_error "Run ./scripts/build.sh first"
     exit 1
 fi
@@ -233,17 +159,12 @@ fi
 # ============================================
 echo ""
 echo "=============================================="
-if $TEST_MODE; then
-    echo -e "${YELLOW}  DEPLOYING (TEST MODE)${NC}"
-else
-    echo -e "${CYAN}  DEPLOYING (PRODUCTION)${NC}"
-fi
+echo -e "${CYAN}  DEPLOYING VERSIONS${NC}"
 echo "=============================================="
 echo ""
-echo "  Commit:  $COMMIT"
-echo "  DB:      $DB_ENV"
-echo "  Agent:   $AGENT_MODE"
-echo "  Built:   $BUILD_TIME"
+echo "  Leo Container: $LEO_CONTAINER"
+echo "  Leo SaaS:      $LEO_SAAS"
+echo "  Built:         $BUILD_TIME"
 echo ""
 echo "=============================================="
 echo ""
@@ -281,9 +202,8 @@ echo ""
 log_step "Updating task definitions..."
 echo "----------------------------------------------"
 
-# ECR image references (match what was pushed)
-LEO_WEB_IMAGE="${ECR_REGISTRY}/leo-web:${COMMIT}-${DB_ENV}"
-LEO_WORKER_IMAGE="${ECR_REGISTRY}/leo-worker:${COMMIT}-${AGENT_MODE}"
+LEO_SAAS_IMAGE="${ECR_REGISTRY}/leo-saas-app:${LEO_SAAS}"
+LEO_CONTAINER_IMAGE="${ECR_REGISTRY}/leo:${LEO_CONTAINER}"
 
 # --- Update Leo Container (generator) task definition ---
 log_info "Updating Leo Container task definition..."
@@ -315,7 +235,7 @@ if [[ -z "$LEO_TASK_DEF" ]]; then
 fi
 
 # Update image in container definition
-NEW_LEO_TASK_DEF=$(echo "$LEO_TASK_DEF" | jq --arg img "$LEO_WORKER_IMAGE" '
+NEW_LEO_TASK_DEF=$(echo "$LEO_TASK_DEF" | jq --arg img "$LEO_CONTAINER_IMAGE" '
     .containerDefinitions[0].image = $img |
     del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
 ')
@@ -374,8 +294,8 @@ fi
 
 # Update image AND GENERATOR_IMAGE env var (points to leo container)
 NEW_SAAS_TASK_DEF=$(echo "$SAAS_TASK_DEF" | jq \
-    --arg img "$LEO_WEB_IMAGE" \
-    --arg gen_img "$LEO_WORKER_IMAGE" \
+    --arg img "$LEO_SAAS_IMAGE" \
+    --arg gen_img "$LEO_CONTAINER_IMAGE" \
     --arg gen_task "$NEW_LEO_TASK_DEF_ARN" '
     .containerDefinitions[0].image = $img |
     .containerDefinitions[0].environment = [
@@ -545,31 +465,6 @@ else
 fi
 
 # ============================================
-# Verify Baked-In Version via Health Endpoint
-# ============================================
-# This is the definitive check - the version baked into the container
-# at build time, not what ECS thinks is running
-echo ""
-log_info "Verifying baked-in version via health endpoint..."
-
-# Wait a bit for CloudFront cache to clear
-sleep 5
-
-HEALTH_RESPONSE=$(curl -s --max-time 10 "$CLOUDFRONT_URL/health" 2>/dev/null)
-HEALTH_VERSION=$(echo "$HEALTH_RESPONSE" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
-
-if [[ -n "$HEALTH_VERSION" && "$HEALTH_VERSION" != "dev" ]]; then
-    if [[ "$HEALTH_VERSION" == "$LEO_SAAS" ]]; then
-        log_success "Health endpoint version: $HEALTH_VERSION (MATCH)"
-    else
-        log_warn "Health endpoint version mismatch: expected $LEO_SAAS, got $HEALTH_VERSION"
-        log_warn "This may indicate CloudFront cache delay - try again in a few minutes"
-    fi
-else
-    log_warn "Could not verify version via health endpoint (response: $HEALTH_RESPONSE)"
-fi
-
-# ============================================
 # Kill Stale Generator Tasks
 # ============================================
 # Generator tasks may be running with old images. New generations would reuse
@@ -682,17 +577,6 @@ echo "    Expected:  $LEO_CONTAINER"
 echo "    Running:   $RUNNING_GENERATOR_TAG"
 if [[ "$RUNNING_GENERATOR_TAG" == "$LEO_CONTAINER" ]]; then
     echo -e "    Status:    ${GREEN}MATCH${NC}"
-else
-    echo -e "    Status:    ${RED}MISMATCH${NC}"
-fi
-echo ""
-echo "  Health Endpoint (Baked-In):"
-echo "    Expected:  $LEO_SAAS"
-echo "    Actual:    ${HEALTH_VERSION:-unknown}"
-if [[ "$HEALTH_VERSION" == "$LEO_SAAS" ]]; then
-    echo -e "    Status:    ${GREEN}VERIFIED${NC}"
-elif [[ -z "$HEALTH_VERSION" || "$HEALTH_VERSION" == "dev" ]]; then
-    echo -e "    Status:    ${YELLOW}UNVERIFIED${NC}"
 else
     echo -e "    Status:    ${RED}MISMATCH${NC}"
 fi
