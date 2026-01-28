@@ -1,1 +1,0 @@
-"""Backend project initialization MCP server for FastAPI projects."""

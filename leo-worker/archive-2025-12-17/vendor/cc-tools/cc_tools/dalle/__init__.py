@@ -1,1 +1,0 @@
-"""DALL-E MCP Server Package"""

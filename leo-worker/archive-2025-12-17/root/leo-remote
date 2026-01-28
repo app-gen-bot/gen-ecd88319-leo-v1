@@ -1,6 +1,0 @@
-#!/bin/bash
-# Leo Remote CLI wrapper
-# Usage: ./leo-remote "Create a todo app"
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/remote/cli" && node dist/main.js "$@"

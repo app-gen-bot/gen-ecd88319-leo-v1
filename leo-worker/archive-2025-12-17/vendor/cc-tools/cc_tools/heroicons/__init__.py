@@ -1,1 +1,0 @@
-"""Heroicons MCP Server for providing icon components to AI agents."""

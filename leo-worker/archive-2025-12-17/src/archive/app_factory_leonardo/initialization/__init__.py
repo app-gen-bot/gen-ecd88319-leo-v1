@@ -1,1 +1,0 @@
-"""Project initialization modules for frontend and backend setup."""
