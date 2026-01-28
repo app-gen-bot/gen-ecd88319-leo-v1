@@ -359,6 +359,11 @@ export class DockerContainerManager extends EventEmitter implements IContainerMa
         console.warn(`   Claude: ⚠️ No Claude token configured!`);
       }
 
+      // Add OpenAI API key for trajectory analysis (optional)
+      if (process.env.OPENAI_API_KEY) {
+        env.push(`OPENAI_API_KEY=${process.env.OPENAI_API_KEY}`);
+      }
+
       // Add AWS credentials if available (for boto3/AWS SDK in generator)
       if (process.env.AWS_ACCESS_KEY_ID) {
         env.push(`AWS_ACCESS_KEY_ID=${process.env.AWS_ACCESS_KEY_ID}`);
