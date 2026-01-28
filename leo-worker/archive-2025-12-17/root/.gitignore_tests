@@ -1,0 +1,11 @@
+# Test files (to be added to .gitignore if needed)
+test_*.py
+debug_*.py
+check_*.py
+inspect_*.py
+verify_*.py
+custom_*.py
+patched_*.py
+*_test/
+test_outputs/
+test_prompts/

@@ -1,0 +1,30 @@
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from '@shared/schema';
+
+// Get database connection string from environment
+// For Supabase: Get from Settings → Database → Connection String (Connection pooling)
+// Format: postgresql://postgres:[password]@db.[project].supabase.co:5432/postgres
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error(
+    'DATABASE_URL environment variable is not set. ' +
+    'Add it to your .env file. ' +
+    'For Supabase: Get from Settings → Database → Connection String (Connection pooling)'
+  );
+}
+
+// Create PostgreSQL client with connection pooling
+const client = postgres(connectionString);
+
+// Create Drizzle ORM instance with schema
+// This enables:
+// - Type-safe queries at compile time
+// - Automatic snake_case ↔ camelCase conversion
+// - Automatic undefined → null conversion
+// - Better performance (direct PostgreSQL protocol)
+export const db = drizzle(client, { schema });
+
+// Export schema for convenience
+export { schema };

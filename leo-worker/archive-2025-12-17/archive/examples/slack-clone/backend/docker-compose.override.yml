@@ -1,0 +1,15 @@
+version: '3.8'
+
+# Development overrides - this file is automatically loaded by docker-compose
+services:
+  backend:
+    # Enable hot reload for development
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # Mount source code for development
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+    # Development environment variables
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1

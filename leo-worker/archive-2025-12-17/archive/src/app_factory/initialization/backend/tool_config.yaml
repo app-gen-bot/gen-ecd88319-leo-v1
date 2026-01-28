@@ -1,0 +1,8 @@
+command: uv
+args:
+  - --directory
+  - ${MCP_TOOLS_PATH}
+  - run
+  - mcp-backend-init
+  - --workspace
+  - ${APP_WORKSPACE_PATH}

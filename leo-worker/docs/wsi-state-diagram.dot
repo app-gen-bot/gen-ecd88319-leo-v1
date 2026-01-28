@@ -1,0 +1,92 @@
+// WSI Protocol v2.1 - Connection State Machine
+// Generate PNG: dot -Tpng wsi-state-diagram.dot -o wsi-state-diagram.png
+
+digraph WSI_State_Machine {
+    // Graph settings
+    rankdir=TB;
+    splines=true;
+    nodesep=0.8;
+    ranksep=1.0;
+    fontname="Helvetica";
+
+    // Node defaults
+    node [
+        fontname="Helvetica",
+        fontsize=12,
+        shape=box,
+        style="rounded,filled",
+        width=1.5,
+        height=0.6
+    ];
+
+    // Edge defaults
+    edge [
+        fontname="Helvetica",
+        fontsize=10
+    ];
+
+    // Start point (pseudo-state)
+    start [label="", shape=circle, width=0.3, height=0.3, style=filled, fillcolor=black];
+
+    // States with semantic coloring
+    CONNECTING [label="CONNECTING\n(connecting)", fillcolor="#FEF3C7", color="#D97706"];
+    READY [label="READY\n(ready)", fillcolor="#DBEAFE", color="#2563EB"];
+    ACTIVE [label="ACTIVE\n(active)", fillcolor="#D1FAE5", color="#059669"];
+    PROMPTING [label="PROMPTING\n(prompting)", fillcolor="#E9D5FF", color="#7C3AED"];
+    COMPLETED [label="COMPLETED\n(completed)", fillcolor="#CFFAFE", color="#0891B2"];
+    ERROR [label="ERROR\n(error)", fillcolor="#FEE2E2", color="#DC2626"];
+    DISCONNECTED [label="DISCONNECTED\n(disconnected)", fillcolor="#F3F4F6", color="#6B7280", peripheries=2];
+
+    // Initial transition
+    start -> CONNECTING;
+
+    // Happy path (green arrows)
+    CONNECTING -> READY [label="ready msg sent", color="#059669", fontcolor="#059669"];
+    READY -> ACTIVE [label="start_generation\nreceived", color="#059669", fontcolor="#059669"];
+    ACTIVE -> COMPLETED [label="generation\ndone", color="#059669", fontcolor="#059669"];
+    COMPLETED -> DISCONNECTED [label="graceful\nclose", color="#059669", fontcolor="#059669"];
+
+    // Interactive mode transitions (purple)
+    ACTIVE -> PROMPTING [label="decision\nrequired", color="#7C3AED", fontcolor="#7C3AED"];
+    PROMPTING -> ACTIVE [label="decision_response\nreceived", color="#7C3AED", fontcolor="#7C3AED"];
+    PROMPTING -> COMPLETED [label="user says\n'done'", color="#7C3AED", fontcolor="#7C3AED"];
+
+    // Self-loop (autonomous mode iterations)
+    ACTIVE -> ACTIVE [label="next iteration\n(autonomous)", color="#0891B2", fontcolor="#0891B2"];
+
+    // Connection reuse (cyan)
+    COMPLETED -> READY [label="connection\nreuse", color="#0891B2", fontcolor="#0891B2", style=dashed];
+
+    // Error transitions (red)
+    CONNECTING -> ERROR [label="", color="#DC2626"];
+    READY -> ERROR [label="", color="#DC2626"];
+    ACTIVE -> ERROR [label="fatal\nerror", color="#DC2626"];
+    PROMPTING -> ERROR [label="", color="#DC2626"];
+    ERROR -> DISCONNECTED [label="cleanup", color="#DC2626"];
+
+    // Disconnect from anywhere (gray, dashed)
+    CONNECTING -> DISCONNECTED [label="", color="#6B7280", style=dashed];
+    READY -> DISCONNECTED [label="", color="#6B7280", style=dashed];
+    ACTIVE -> DISCONNECTED [label="abort", color="#6B7280", style=dashed];
+    PROMPTING -> DISCONNECTED [label="", color="#6B7280", style=dashed];
+
+    // Legend
+    subgraph cluster_legend {
+        label="Legend";
+        fontsize=14;
+        style=filled;
+        fillcolor="#FAFAFA";
+        color="#E5E7EB";
+
+        node [width=0.1, height=0.1, shape=plaintext, style=""];
+
+        l1 [label="Green: Happy path (autonomous mode)"];
+        l2 [label="Purple: Interactive/confirm_first mode"];
+        l3 [label="Cyan: Connection reuse / iterations"];
+        l4 [label="Red: Error handling"];
+        l5 [label="Gray dashed: Disconnect (from any state)"];
+        l6 [label="Double border: Terminal state"];
+
+        l1 -> l2 -> l3 -> l4 -> l5 -> l6 [style=invis];
+    }
+}

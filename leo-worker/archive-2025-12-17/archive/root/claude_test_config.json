@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "browser-test": {
+      "type": "stdio", 
+      "command": "/Users/labheshpatel/apps/app-factory/.venv/bin/mcp-browser",
+      "env": {
+        "MCP_LOG_LEVEL": "INFO",
+        "BROWSER_HEADLESS": "false"
+      }
+    }
+  }
+}

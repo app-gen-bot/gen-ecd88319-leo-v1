@@ -1,0 +1,1 @@
+"""Browser automation MCP server."""

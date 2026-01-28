@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════════
+  QUICK FIX: "Invalid ETH Mainnet Balance" Error
+═══════════════════════════════════════════════════════════
+
+PROBLEM: QuickNode faucet requires mainnet ETH (you don't have it)
+
+SOLUTION: Use Alchemy faucet instead (no mainnet ETH needed)
+
+───────────────────────────────────────────────────────────
+  3 SIMPLE STEPS (5 Minutes Total)
+───────────────────────────────────────────────────────────
+
+1. CREATE ALCHEMY ACCOUNT
+   → https://auth.alchemy.com/signup
+   → Enter email + password
+   → Verify email
+
+2. GET BASE SEPOLIA ETH
+   → https://www.alchemy.com/faucets/base-sepolia
+   → Enter: 0x9c679c53e7a4D97079357E4aDd4ABa9300Cb68d9
+   → Click "Send Me ETH"
+   → Receive 0.1 ETH ✅
+
+3. VERIFY & TEST
+   → Run: node verify-wallet-balance.js
+   → Should show: ✅ WALLET FUNDED
+   → Then: npm run dev
+   → Then: ./test-blockchain-connection.sh
+
+───────────────────────────────────────────────────────────
+  ALTERNATIVE METHODS (If Alchemy Doesn't Work)
+───────────────────────────────────────────────────────────
+
+METHOD 1: Google Cloud Faucet (No signup!)
+  → https://cloud.google.com/application/web3/faucet/base-sepolia
+  → Enter address + CAPTCHA
+  → Get 0.05 ETH
+
+METHOD 2: Base Discord
+  → https://discord.gg/buildonbase
+  → #faucet channel
+  → /faucet 0x9c679c53e7a4D97079357E4aDd4ABa9300Cb68d9
+
+METHOD 3: Bridge from Sepolia
+  → Get Sepolia ETH: https://www.alchemy.com/faucets/ethereum-sepolia
+  → Bridge: https://bridge.base.org/ (Sepolia → Base Sepolia)
+  → Send to reward wallet
+
+───────────────────────────────────────────────────────────
+  YOUR WALLET ADDRESS
+───────────────────────────────────────────────────────────
+
+0x9c679c53e7a4D97079357E4aDd4ABa9300Cb68d9
+
+───────────────────────────────────────────────────────────
+  VERIFY ON BLOCKCHAIN
+───────────────────────────────────────────────────────────
+
+https://sepolia.basescan.org/address/0x9c679c53e7a4D97079357E4aDd4ABa9300Cb68d9
+
+───────────────────────────────────────────────────────────
+  DOCUMENTATION
+───────────────────────────────────────────────────────────
+
+EASY_FUNDING_FIX.md              → Start here
+ALTERNATIVE_FUNDING_METHODS.md   → All options + troubleshooting
+WALLET_FUNDING_GUIDE.md          → Detailed guide
+verify-wallet-balance.js         → Check balance script
+
+───────────────────────────────────────────────────────────
+  RECOMMENDED: ALCHEMY METHOD
+───────────────────────────────────────────────────────────
+
+✓ Fastest (5 minutes)
+✓ Most reliable
+✓ Gives 0.1 ETH (enough for 2000+ test transactions)
+✓ Free signup with just email
+
+START HERE: https://www.alchemy.com/faucets/base-sepolia
+
+═══════════════════════════════════════════════════════════

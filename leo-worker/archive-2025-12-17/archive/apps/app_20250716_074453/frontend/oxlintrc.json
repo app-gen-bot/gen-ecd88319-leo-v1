@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "no-console": "warn",
+    "no-debugger": "error",
+    "no-unused-vars": "error",
+    "no-undef": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "ignore": [
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+    "out"
+  ]
+}

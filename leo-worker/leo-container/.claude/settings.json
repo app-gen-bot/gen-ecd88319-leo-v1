@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "supabase_setup": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "python", "-m", "cc_tools.supabase_setup.server"],
+      "env": {
+        "PYTHONPATH": "/factory"
+      }
+    },
+    "chrome_devtools": {
+      "type": "stdio",
+      "command": "xvfb-run",
+      "args": [
+        "--auto-servernum",
+        "--server-args=-screen 0 1920x1080x24",
+        "chrome-devtools-mcp",
+        "--executablePath", "/usr/bin/chromium",
+        "--chromeArg=--no-sandbox",
+        "--chromeArg=--disable-dev-shm-usage"
+      ]
+    }
+  }
+}

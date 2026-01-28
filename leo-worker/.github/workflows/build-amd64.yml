@@ -1,0 +1,68 @@
+name: Build AMD64
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit SHA to build'
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: leo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::855235011337:role/github-actions-ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ inputs.commit }}
+        run: |
+          # Generate build manifest
+          BUILD_MANIFEST=$(cat <<EOF
+          {
+            "commit": "${{ inputs.commit }}",
+            "commitFull": "${{ inputs.commit }}",
+            "repo": "${{ github.repository }}",
+            "repoUrl": "https://github.com/${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "buildHost": "github-actions",
+            "architecture": "amd64",
+            "component": "leo-container"
+          }
+          EOF
+          )
+
+          docker build \
+            --platform linux/amd64 \
+            --build-arg BUILD_MANIFEST="$BUILD_MANIFEST" \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            leo-container/
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Output image URI
+        run: |
+          echo "Image pushed: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ inputs.commit }}"

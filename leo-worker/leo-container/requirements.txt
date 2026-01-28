@@ -1,0 +1,67 @@
+# ============================================
+# Leo WebSocket - Production Dependencies
+# ============================================
+
+# Core WebSocket
+websockets>=12.0
+
+# Data validation
+pydantic>=2.5.0
+
+# Logging
+structlog>=24.1.0
+
+# Environment configuration
+python-dotenv>=1.0.0
+
+# AWS integration
+boto3>=1.34.0
+
+# Database (for ephemeral Supabase reset)
+asyncpg>=0.29.0
+
+# GitHub integration
+PyGithub>=2.1.0
+
+# Monitoring and Observability
+prometheus-client==0.19.0
+aiohttp==3.9.1
+psutil>=5.9.0  # System metrics for error diagnostics
+
+# HTTP client for downloading attachments from Supabase Storage
+httpx>=0.27.0
+
+# Image processing for screenshot streaming
+Pillow>=10.0.0
+
+# MCP server framework for custom tools
+fastmcp>=0.4.0
+
+# ============================================
+# Real Mode Dependencies
+# ============================================
+# Required for GENERATOR_MODE=real
+
+anthropic>=0.75.0
+openai>=2.15.0
+claude-agent-sdk>=0.1.18
+anyio>=4.0.0
+
+# Note: cc-agent and cc-tools are installed from vendor directory in Dockerfile
+
+# ============================================
+# WSI Protocol Implementation
+# ============================================
+# leo-wsi provides WSI Protocol client with bug fixes
+# Will be copied to /app/leo-wsi during Docker build
+# Installed as editable package: pip install -e /app/leo-wsi
+
+# ============================================
+# Development/Testing Dependencies
+# ============================================
+# These are installed separately in dev environments
+# NOT included in production Docker image
+
+# pytest==7.4.0
+# pytest-asyncio==0.21.0
+# pytest-cov==4.1.0

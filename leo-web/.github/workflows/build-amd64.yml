@@ -1,0 +1,81 @@
+name: Build AMD64
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit SHA to build'
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: leo-saas-app
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::855235011337:role/github-actions-ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get build secrets from AWS Secrets Manager
+        id: secrets
+        run: |
+          SUPABASE_URL=$(aws secretsmanager get-secret-value --secret-id leo/supabase-url --query SecretString --output text)
+          SUPABASE_ANON_KEY=$(aws secretsmanager get-secret-value --secret-id leo/supabase-anon-key --query SecretString --output text)
+          echo "VITE_SUPABASE_URL=$SUPABASE_URL" >> $GITHUB_OUTPUT
+          echo "VITE_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> $GITHUB_OUTPUT
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ inputs.commit }}
+        run: |
+          # Generate build manifest
+          BUILD_MANIFEST=$(cat <<EOF
+          {
+            "commit": "${{ inputs.commit }}",
+            "commitFull": "${{ inputs.commit }}",
+            "repo": "${{ github.repository }}",
+            "repoUrl": "https://github.com/${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "buildTime": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "buildHost": "github-actions",
+            "architecture": "amd64",
+            "component": "leo-saas"
+          }
+          EOF
+          )
+
+          docker build \
+            --platform linux/amd64 \
+            --build-arg VITE_SUPABASE_URL="${{ steps.secrets.outputs.VITE_SUPABASE_URL }}" \
+            --build-arg VITE_SUPABASE_ANON_KEY="${{ steps.secrets.outputs.VITE_SUPABASE_ANON_KEY }}" \
+            --build-arg GIT_COMMIT="${{ inputs.commit }}" \
+            --build-arg BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --build-arg APP_VERSION="${IMAGE_TAG:0:8}" \
+            --build-arg BUILD_MANIFEST="$BUILD_MANIFEST" \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            .
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Output image URI
+        run: |
+          echo "Image pushed: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ inputs.commit }}"

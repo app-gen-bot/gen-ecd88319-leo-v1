@@ -1,0 +1,71 @@
+digraph "Leo Remote Architecture" {
+  // --- Layout & Styling ---
+  graph[
+    rankdir=LR,
+    compound=true,
+    nodesep=0.6,
+    ranksep=1.0,
+    splines=polyline,
+    fontname="Helvetica"
+  ];
+  node[
+    shape=box,
+    style="rounded,filled",
+    fillcolor="white",
+    color="#444444",
+    fontsize=10,
+    fontname="Helvetica"
+  ];
+  edge[
+    color="#555555",
+    arrowsize=0.8,
+    fontsize=9,
+    fontname="Helvetica"
+  ];
+
+  // --- Terminal ---
+  TERMINAL [label="Terminal\n(stdin/stdout)", fillcolor="#FFE4B5"];
+
+  // --- Leo Remote CLI ---
+  subgraph cluster_cli {
+    label=<<b>Leo Remote CLI</b><br/><font point-size="8">(TypeScript - reused in Leo SaaS)</font>>;
+    labelloc="t";
+    style="rounded,filled";
+    color="#7A9CC6";
+    bgcolor="#F7FAFF";
+
+    CLI_MAIN [label="CLI Entry Point"];
+    WSI_SERVER [label="WSI Server\n(reusable module)", fillcolor="#E8FFE8"];
+    CONTAINER_MGR [label="Container Manager\n(reusable module)", fillcolor="#E8FFE8"];
+  }
+
+  // --- Leo Container (simplified - see leo-container-internal.dot for details) ---
+  LEO_CONTAINER [
+    label=<<b>Leo Container</b><br/><font point-size="8">(see internal diagram)</font>>,
+    style="rounded,filled",
+    fillcolor="#E0FFE0",
+    color="#90C090",
+    penwidth=2
+  ];
+
+  // --- External Services ---
+  DOCKER [label="Docker", shape=component, fillcolor="#F0F0F0"];
+  GITHUB [label="GitHub", shape=cylinder, fillcolor="#FFE8E8"];
+  AWS_SECRETS [label="AWS Secrets\nManager", shape=cylinder, fillcolor="#E8E8FF"];
+
+  // --- User Flow ---
+  TERMINAL -> CLI_MAIN [label="prompt", dir=both];
+
+  // --- Container Lifecycle ---
+  CLI_MAIN -> CONTAINER_MGR;
+  CLI_MAIN -> WSI_SERVER;
+  CONTAINER_MGR -> DOCKER [label="spawn/stop"];
+  DOCKER -> LEO_CONTAINER [style=dashed, label="container\nconnects"];
+
+  // --- WSI Protocol ---
+  LEO_CONTAINER -> WSI_SERVER [label="WSI Protocol v2.1", dir=both, penwidth=1.5, color="#009900"];
+
+  // --- External Connections (from container) ---
+  LEO_CONTAINER -> GITHUB [label="push"];
+  LEO_CONTAINER -> AWS_SECRETS [label="load tokens", style=dashed];
+}

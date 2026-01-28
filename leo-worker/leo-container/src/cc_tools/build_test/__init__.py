@@ -1,0 +1,1 @@
+"""Build and test MCP server for frontend projects."""

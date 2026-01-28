@@ -1,0 +1,146 @@
+digraph "Leo Container Architecture" {
+  // --- Layout & Styling ---
+  graph[
+    rankdir=TB,
+    compound=true,
+    nodesep=0.8,
+    ranksep=1.0,
+    splines=polyline,
+    fontname="Helvetica"
+  ];
+  node[
+    shape=box,
+    style="rounded,filled",
+    fillcolor="white",
+    color="#444444",
+    fontsize=10,
+    fontname="Helvetica"
+  ];
+  edge[
+    color="#555555",
+    arrowsize=0.8,
+    fontsize=9,
+    fontname="Helvetica"
+  ];
+
+  // --- Leo Container (Main Box) ---
+  subgraph cluster_container {
+    label=<<b>Leo Container</b><br/><font point-size="9">(Docker - identical for Remote &amp; SaaS)</font>>;
+    labelloc="t";
+    style="rounded,filled";
+    color="#90C090";
+    bgcolor="#D8F0D8";
+
+    // --- WSI Client Layer ---
+    subgraph cluster_wsi {
+      label="WSI Client";
+      labelloc="t";
+      style="rounded,filled";
+      color="#7A9CC6";
+      bgcolor="#E8F0FF";
+
+      WS_CONN [label="WebSocket\nConnection"];
+      MSG_HANDLER [label="Message\nHandler"];
+      STATE_MACHINE [label="State Machine\n(WSI Protocol v2.1)"];
+    }
+
+    // --- Agent Layer ---
+    subgraph cluster_agent {
+      label="AppGeneratorAgent";
+      labelloc="t";
+      style="rounded,filled";
+      color="#C09070";
+      bgcolor="#FFF0E8";
+
+      CLAUDE_CODE [label="Claude Code\n(AI Engine)"];
+    }
+
+    // --- Workspace Layer ---
+    subgraph cluster_workspace {
+      label="/workspace";
+      labelloc="t";
+      style="rounded,filled";
+      color="#AAAAAA";
+      bgcolor="#F8F8F8";
+
+      // --- /app (Generated Application) ---
+      subgraph cluster_app {
+        label="/app";
+        labelloc="t";
+        style="rounded,filled";
+        color="#7A9CC6";
+        bgcolor="#E8F4FF";
+
+        APP_GIT [label=".git", shape=folder, fillcolor="#FFEEEE"];
+      }
+
+      // --- /leo-artifacts ---
+      subgraph cluster_leo {
+        label="/leo-artifacts";
+        labelloc="t";
+        style="rounded,filled";
+        color="#C09070";
+        bgcolor="#FFF8F0";
+
+        LEO_GIT [label=".git", shape=folder, fillcolor="#FFEEEE"];
+      }
+    }
+
+    // --- Manager Modules (positioned below workspace) ---
+    SECRET_MGR [label="Secrets Loader"];
+    GIT_MGR [label="Git Manager"];
+    // S3_MGR [label="S3 Manager"];  // Removed: Git is source of truth
+  }
+
+  // --- External Services ---
+  ORCHESTRATOR [label="Orchestrator\n(WSI Server)", fillcolor="#FFE4B5"];
+  GITHUB [label="GitHub", shape=cylinder, fillcolor="#FFE8E8"];
+  SECRETS [label="AWS Secrets\nManager", shape=cylinder, fillcolor="#FFE8E8"];
+  // S3 [label="AWS S3", shape=cylinder, fillcolor="#FFE8E8"];  // Removed: Git is source of truth
+
+  // --- WSI Protocol Connection ---
+  ORCHESTRATOR -> WS_CONN [
+    label="WSI Protocol v2.1",
+    dir=both,
+    penwidth=1.5,
+    color="#009900"
+  ];
+
+  // --- Internal WSI Flow ---
+  WS_CONN -> MSG_HANDLER;
+  MSG_HANDLER -> STATE_MACHINE;
+  STATE_MACHINE -> MSG_HANDLER [style=dashed, label="state"];
+
+  // --- Message Handler to Agent ---
+  MSG_HANDLER -> CLAUDE_CODE [label="start_generation", penwidth=1.2, color="#009900"];
+
+  // --- Agent to Workspace ---
+  CLAUDE_CODE -> APP_GIT [label="generate &\ncommit code", penwidth=1.2];
+  CLAUDE_CODE -> LEO_GIT [label="write &\ncommit artifacts", style=dashed];
+
+  // --- Progress Messages Back ---
+  CLAUDE_CODE -> MSG_HANDLER [
+    label="iteration_complete\nall_work_complete",
+    style=dashed,
+    color="#009900",
+    constraint=false
+  ];
+
+  // --- External Integrations ---
+  // Invisible edges to push Git Manager below workspace
+  APP_GIT -> GIT_MGR [style=invis];
+  LEO_GIT -> GIT_MGR [style=invis];
+
+  GIT_MGR -> GITHUB [label="push or clone", dir=both];
+  APP_GIT -> GIT_MGR [label="read", constraint=false];
+  LEO_GIT -> GIT_MGR [label="read", constraint=false];
+  SECRET_MGR -> SECRETS [label="load tokens", style=dashed];
+
+  // S3 removed - Git is the source of truth for versioning and state
+  // S3_MGR -> APP_GIT [label="zip"];
+  // S3_MGR -> LEO_GIT [label="zip"];
+  // S3_MGR -> S3 [label="upload"];
+
+  // --- Startup Flow ---
+  SECRET_MGR -> CLAUDE_CODE [label="inject env", style=dashed];
+}

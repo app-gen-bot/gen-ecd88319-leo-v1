@@ -1,0 +1,1 @@
+"""Ruff MCP Server - Ultra-fast Python linting and formatting."""

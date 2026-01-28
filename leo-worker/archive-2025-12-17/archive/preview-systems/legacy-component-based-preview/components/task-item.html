@@ -1,0 +1,47 @@
+<div class="bg-card rounded-xl google-shadow p-4 mb-3 fade-in" data-task-id="{{ID}}">
+    <div class="flex items-center gap-4">
+        <button 
+            class="w-6 h-6 rounded-full border-2 {{#COMPLETED}}border-accent bg-accent{{/COMPLETED}}{{^COMPLETED}}border-muted-foreground{{/COMPLETED}} flex items-center justify-center transition-colors"
+            data-event="click:toggleTask" 
+            data-task-id="{{ID}}"
+        >
+            <span class="material-icons text-accent-foreground text-sm {{^COMPLETED}}hidden{{/COMPLETED}}">check</span>
+        </button>
+        
+        <div class="flex-1">
+            <h3 class="font-medium {{#COMPLETED}}line-through text-muted-foreground{{/COMPLETED}}{{^COMPLETED}}text-foreground{{/COMPLETED}}" data-task-title>
+                {{TITLE}}
+            </h3>
+            {{#DESCRIPTION}}
+            <p class="text-sm text-muted-foreground mt-1">{{DESCRIPTION}}</p>
+            {{/DESCRIPTION}}
+            {{#CREATED_TIME}}
+            <p class="text-xs text-muted-foreground mt-2">{{CREATED_TIME}}</p>
+            {{/CREATED_TIME}}
+        </div>
+        
+        <div class="flex items-center gap-2">
+            {{#PRIORITY}}
+            <span class="material-icons text-sm {{#HIGH_PRIORITY}}text-red-500{{/HIGH_PRIORITY}}{{#MEDIUM_PRIORITY}}text-yellow-500{{/MEDIUM_PRIORITY}}{{#LOW_PRIORITY}}text-green-500{{/LOW_PRIORITY}}">
+                flag
+            </span>
+            {{/PRIORITY}}
+            
+            <button 
+                class="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                data-event="click:editTask"
+                data-task-id="{{ID}}"
+            >
+                <span class="material-icons text-sm">edit</span>
+            </button>
+            
+            <button 
+                class="p-2 text-muted-foreground hover:text-red-500 transition-colors"
+                data-event="click:deleteTask"
+                data-task-id="{{ID}}"
+            >
+                <span class="material-icons text-sm">delete</span>
+            </button>
+        </div>
+    </div>
+</div>

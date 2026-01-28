@@ -1,0 +1,9 @@
+.env
+.env.local
+
+# Test artifacts
+tests/test-results/
+playwright-report/
+
+# Dependencies
+node_modules/

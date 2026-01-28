@@ -1,0 +1,21 @@
+<div class="bg-card rounded-xl google-shadow p-2 mb-6">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1">
+            {{#FILTERS}}
+            <button class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {{#ACTIVE}}bg-primary text-primary-foreground{{/ACTIVE}}{{^ACTIVE}}text-muted-foreground hover:text-foreground hover:bg-muted{{/ACTIVE}}"
+                    data-event="click:filterTasks" data-filter="{{VALUE}}">
+                <span class="material-icons text-lg">{{ICON}}</span>
+                {{LABEL}}
+            </button>
+            {{/FILTERS}}
+        </div>
+        
+        {{#SHOW_CLEAR}}
+        <button class="text-sm text-red-500 hover:text-red-600 font-medium"
+                data-event="click:clearCompleted">
+            <span class="material-icons text-sm">clear</span>
+            Clear Completed
+        </button>
+        {{/SHOW_CLEAR}}
+    </div>
+</div>

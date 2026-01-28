@@ -1,0 +1,105 @@
+{
+  "mcpServers": {
+    "mem0": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-mem0"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO",
+        "MEM0_STORAGE_PATH": "/Users/labheshpatel/.mem0",
+        "MEM0_NAMESPACE": "orchestrator_prds"
+      }
+    },
+    "graphiti": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-graphiti"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO",
+        "FALKORDB_HOST": "localhost",
+        "FALKORDB_PORT": "6379",
+        "FALKORDB_GRAPH": "app_factory_kg"
+      }
+    },
+    "context_manager": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-context-manager"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO",
+        "CONTEXT_STORAGE_PATH": "/Users/labheshpatel/apps/app-factory/.agent_context"
+      }
+    },
+    "tree_sitter": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-tree-sitter"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO"
+      }
+    },
+    "integration_analyzer": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-integration-analyzer"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO"
+      }
+    },
+    "browser": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-browser",
+        "--workspace",
+        "/Users/labheshpatel/apps/app-factory"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO"
+      }
+    },
+    "build_test": {
+      "type": "stdio",
+      "command": "/usr/local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/labheshpatel/apps/ai-workspace/mcp-tools",
+        "run",
+        "mcp-build-test",
+        "--workspace",
+        "/Users/labheshpatel/apps/app-factory"
+      ],
+      "env": {
+        "MCP_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

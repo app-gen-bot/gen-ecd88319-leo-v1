@@ -1,0 +1,155 @@
+# ============================================
+# Docker Compose - Testing Configuration
+# ============================================
+# Purpose: Test both orchestrator modes (Local Docker & AWS ECS)
+# Usage:
+#   Mode 1 (Local Docker): docker-compose -f docker-compose.test.yml up test-local
+#   Mode 2 (AWS ECS): docker-compose -f docker-compose.test.yml up test-aws
+#   Run All Tests: ./scripts/test-orchestrators.sh
+
+version: '3.8'
+
+services:
+  # ============================================
+  # Main Application Service (Base for Tests)
+  # ============================================
+  app-base:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:5013}
+        - GIT_COMMIT=${GIT_COMMIT:-test}
+        - BUILD_TIME=${BUILD_TIME:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+        - APP_VERSION=${APP_VERSION:-test}
+    image: app-gen-saas:test
+    environment:
+      # Application Settings
+      - NODE_ENV=production
+      - PORT=5013
+
+      # Auth & Storage
+      - AUTH_MODE=${AUTH_MODE:-supabase}
+      - STORAGE_MODE=${STORAGE_MODE:-database}
+
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+
+      # Claude AI
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN}
+
+      # GitHub Integration (optional)
+      - GITHUB_BOT_TOKEN=${GITHUB_BOT_TOKEN}
+
+  # ============================================
+  # Test Mode 1: Local Docker Orchestrator
+  # ============================================
+  test-local:
+    extends: app-base
+    container_name: app-gen-test-local
+    ports:
+      - "5013:5013"
+    environment:
+      # Orchestrator Mode: LOCAL DOCKER
+      - ECS_CLUSTER=  # Empty = triggers local mode
+      - ORCHESTRATOR_MODE=local
+
+      # Docker Configuration
+      - WORKSPACE_DIR=/tmp/generations
+      - GENERATOR_IMAGE=${GENERATOR_IMAGE:-app-generator:latest}
+      - DOCKER_NETWORK=test-local-network
+      - WS_HOST=test-local
+    volumes:
+      # Docker socket for container management
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Workspace for generated apps
+      - ./test-workspace-local:/tmp/generations
+    networks:
+      - test-local-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5013/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # Test Mode 2: AWS ECS Orchestrator
+  # ============================================
+  test-aws:
+    extends: app-base
+    container_name: app-gen-test-aws
+    ports:
+      - "5014:5013"  # Different port to avoid conflicts
+    environment:
+      # Orchestrator Mode: AWS ECS
+      - ECS_CLUSTER=${ECS_CLUSTER}  # Set = triggers AWS mode
+      - ORCHESTRATOR_MODE=aws
+
+      # AWS Configuration
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+      # ECS Task Configuration
+      - APP_GENERATOR_TASK_DEF=${APP_GENERATOR_TASK_DEF}
+      - TASK_SUBNETS=${TASK_SUBNETS}
+      - TASK_SECURITY_GROUP=${TASK_SECURITY_GROUP}
+      - S3_BUCKET=${S3_BUCKET}
+    networks:
+      - test-aws-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5013/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # Test Runner - Automated Testing
+  # ============================================
+  test-runner:
+    image: node:20-alpine
+    container_name: test-runner
+    working_dir: /tests
+    environment:
+      - TEST_LOCAL_URL=http://test-local:5013
+      - TEST_AWS_URL=http://test-aws:5013
+      - TEST_EMAIL=${TEST_EMAIL:-jake@happyllama.ai}
+      - TEST_PASSWORD=${TEST_PASSWORD:-p@12345678}
+    volumes:
+      - ./tests:/tests
+      - ./test-results:/test-results
+    command: >
+      sh -c "
+        echo '🧪 Installing test dependencies...' &&
+        npm install --silent &&
+        echo '✅ Dependencies installed' &&
+        echo '' &&
+        echo '🚀 Running orchestrator tests...' &&
+        node test-orchestrators.js
+      "
+    depends_on:
+      test-local:
+        condition: service_healthy
+      test-aws:
+        condition: service_healthy
+    networks:
+      - test-local-network
+      - test-aws-network
+
+networks:
+  test-local-network:
+    name: test-local-network
+  test-aws-network:
+    name: test-aws-network
+
+volumes:
+  test-workspace-local:
+  test-results:

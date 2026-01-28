@@ -1,0 +1,205 @@
+# Build Prompt: leodavinci.ai — "From Prompt → URL"
+
+You are an expert full‑stack web builder. Build **leodavinci.ai** for the product **Leonardo** — a multi‑agent, **self‑learning** coding platform that turns a natural‑language prompt into a deployed application URL. Leonardo builds **agentic apps** — applications that exhibit **agentic behavior**, meaning they include autonomous AI agents capable of reasoning, planning, and acting independently within the app to achieve goals. These apps can coordinate their own workflows, make context‑aware decisions, and evolve as they interact with users and systems.
+
+Leonardo's multi‑agent system learns from every app it builds, refining its planning, coding, and architecture patterns over time — effectively becoming more capable with each deployment.
+
+Deliver a **modern, minimalistic, dark‑mode** marketing site with elegant motion and clear hierarchy. Follow this specification exactly.
+
+---
+
+## 1) Outcomes & Hosting
+
+* **Production domain:** `leodavinci.ai`
+* **Tech stack:** Vite + React + TypeScript + TailwindCSS + shadcn/ui + Framer Motion.
+* **Mode:** Default dark mode with system preference toggle.
+* **Platform:** **Supabase** for Postgres DB, Auth, Storage, Edge Functions, and Realtime.
+* **Auth (admin only):** Supabase Auth (magic‑link/email). Whitelist domains.
+* **Storage:** Supabase Storage buckets for screenshots and assets.
+* **Server logic:** Supabase Edge Functions for ingestion (URL → metadata + screenshot) and webhooks.
+* **Deployment:** Frontend on Vercel or Netlify; Supabase project for backend.
+* **Testing:** Vitest + Playwright for core tests.
+* **Analytics:** Privacy‑friendly (no cookies by default).
+* **Performance/SEO:** Optimized bundle split, responsive design, sitemap, robots.txt, OpenGraph, structured data.
+
+---
+
+## 2) Site Map & Routes
+
+* **/** – Home
+* **/how-it-works** – The agentic multi‑agent system
+* **/gallery** – "Built with Leonardo" (grid of projects)
+* **/gallery/[slug]** – Project detail template
+* **/about** – About Leonardo & team (includes Labhesh bio)
+* **/contact** – Private beta & contact form
+* **/legal/privacy** and **/legal/terms**
+* **/admin** – Minimal admin dashboard (auth gated)
+
+---
+
+## 3) Core Value Prop & Copy (voice & tone)
+
+**Headline ideas (choose 1, keep others in CMS):**
+
+* *From prompt to production URL — at AI speed.*
+* *Leonardo builds agentic apps, not just web pages.*
+* *Engineer‑grade software, artist‑level polish.*
+
+**Subhead:**
+*Agentic, self‑learning multi‑agent coding that decomposes your idea, plans with enterprise methods, and ships a running product — even if it means spinning up a blockchain along the way.*
+
+**Pillars:**
+
+1. **Agentic Apps** – Apps built with embedded AI agents that can plan, reason, and act within the app.
+2. **Self‑Learning System** – The multi‑agent backbone learns from every build, improving architecture and decisions.
+3. **Enterprise Discipline** – SAFe‑style rigor for requirements, testing, and releases.
+4. **Prompt → URL** – You describe the idea. Leonardo ships a live, intelligent app.
+
+**Tagline footer:** *Leo Da Vinci: artful engineering for the AI era.*
+
+---
+
+## 4) Design & Aesthetics
+
+* **Theme:** Dark mode first. High contrast with elegant neutrals, subtle gradients, and gold/blue accents.
+* **Layout:** Spacious, grid‑based, responsive.
+* **Typography:** Modern minimalism — Inter/Geist/Satoshi for clean readability.
+* **Motion:** Framer Motion micro‑interactions, soft transitions, fade/scale‑in effects.
+* **UI kit:** shadcn/ui components styled with Tailwind presets.
+* **Accessibility:** WCAG AA compliance; reduced motion support.
+
+---
+
+## 5) Home Page Layout (/**)
+
+* **Hero:** Headline, subhead, CTA buttons: `Start in Private Beta` & `See Gallery`.
+* **Agentic Apps section:** Explain built‑in agents (planner, builder, reviewer, deployer) with animated icons and agentic behavior illustration.
+* **How it works (teaser):** Animated 3–4 step diagram (see below) with a link to /how‑it‑works.
+* **Deep Builds:** Showcase cognitive and agentic builds — where apps autonomously act or coordinate tasks.
+* **Gallery preview:** Pulls 6 latest projects with screenshots.
+* **About teaser:** Leonardo da Vinci inspiration + link to /about.
+* **Private beta CTA:** Inline contact form teaser.
+
+---
+
+## 6) How It Works (/how-it-works)
+
+Illustrate the **self‑learning agentic workflow:**
+
+1. **Understand & Deconstruct** – Parse prompt, recall relevant learnings from memory, and extract requirements.
+2. **Plan** – Agents define tasks, architecture, and dependencies.
+3. **Compose** – Agents collaborate to generate code, integrate APIs, and deploy infrastructure.
+4. **Verify** – Testing agents validate functionality, performance, and security.
+5. **Deploy** – The deployer agent ships to production and monitors outcomes.
+6. **Learn** – The system stores insights and improves future builds, achieving cumulative intelligence.
+
+Include an animated visualization of agents collaborating — exchanging tasks, learning, and improving.
+
+---
+
+## 7) Gallery (/gallery)
+
+**Goal:** Show projects built by Leonardo.
+
+* Admin adds a project URL; backend fetches metadata + screenshot automatically via **Supabase Edge Function**.
+* Masonry grid with hover animation.
+* Cards show: screenshot, name, tags, link.
+
+**Initial gallery projects to include:**
+* raiseiq.fly.dev
+* fizzcard.fly.dev
+* funnelsight.fly.dev
+* kidiq.fly.dev
+
+**Project detail page (/gallery/[slug]):**
+
+* Hero with screenshot, title, and description.
+* Sections: Problem → Approach (agentic behavior, learning reuse) → Result → Tech Stack.
+
+---
+
+## 8) About (/about)
+
+**Theme:** The intersection of art and engineering.
+**Bio:** Labhesh Patel — CEO of AI Experience, ex‑CTO & Chief Scientist at Junio, built one of the largest KYC systems. Expert in AI, scalable systems, and engineering excellence.
+**Mission:** Bring the creativity of Da Vinci to modern AI engineering — apps that think and act on their own.
+
+---
+
+## 9) Contact / Private Beta (/contact)
+
+**Form fields:** name, email, idea/description, company (optional).
+
+* Stores to Supabase Postgres.
+* Sends email to `ops@leodavinci.ai` (via Edge Function + SMTP service).
+* Auto‑reply: "We'll respond within 24 hours."
+* Simple success animation (Framer Motion).
+
+---
+
+## 10) Admin (/admin)
+
+* Passwordless email login (Supabase Auth).
+* Add project (URL → metadata + screenshot via Edge Function).
+* CRUD for gallery items.
+* View & manage contact submissions.
+
+---
+
+## 11) Data Model (Supabase / Prisma‑style)
+
+**Tables:**
+
+* `projects(id, name, slug, url, summary, tags[], og_title, og_description, screenshot_url, favicon_url, created_at, updated_at, featured)`
+* `contacts(id, name, email, idea, company, created_at, handled boolean)`
+
+**Policies (RLS):**
+
+* Public read for `projects` (SELECT only).
+* Auth‑required INSERT/UPDATE/DELETE for `projects` and `contacts` (admin role only).
+
+**Edge Functions:**
+
+* `ingestProject(url)`: fetch OG metadata, take full‑page screenshot, store in Storage, upsert into `projects`.
+* `notifyContact(contact_id)`: send team email + auto‑reply.
+
+---
+
+## 12) Implementation Notes
+
+* **ENV:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE`, `SMTP_*`, `SCREENSHOT_API_KEY`.
+* **Screenshot:** Full‑page, retina DPR, ~1200px width, compressed WebP.
+* **Revalidation:** On new/updated project, invalidate gallery cache.
+* **Performance:** Lazy‑load images, code‑split routes.
+* **Security:** zod validation, rate limits, CSRF on sensitive routes.
+
+---
+
+## 13) Acceptance Criteria
+
+1. ✅ Home page highlights **agentic behavior** clearly with visuals/text.
+2. ✅ Dark mode toggle works and persists.
+3. ✅ Admin can add project URLs; Supabase ingests metadata and screenshots.
+4. ✅ Contact form writes to Supabase, triggers email + 24h auto‑reply.
+5. ✅ /how‑it‑works explains self‑learning and agentic autonomy.
+6. ✅ Responsive and Lighthouse ≥ 90.
+
+---
+
+## 14) Visual Summary
+
+* **Mood:** modern, intelligent, minimal.
+* **Palette:** graphite, slate, gold/blue accent.
+* **Motion:** subtle but expressive (Framer Motion).
+* **Font hierarchy:** clear, breathable whitespace.
+
+---
+
+## 15) Deliverables
+
+* Complete **Vite + React + TypeScript** app.
+* Supabase project (tables, RLS, Edge Functions, Storage buckets).
+* Admin interface for gallery & submissions.
+* Deployment‑ready for `leodavinci.ai`.
+
+**Build it now.**

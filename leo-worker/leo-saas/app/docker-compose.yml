@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Happy Llama Web Application
+  happy-llama:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: happy-llama
+    ports:
+      - "5013:5013"
+    environment:
+      # Application Settings
+      - NODE_ENV=production
+      - PORT=5013
+      - VITE_API_URL=http://localhost:5013
+
+      # AWS Configuration (required for Secrets Manager SDK)
+      - AWS_REGION=us-east-1
+      - AWS_PROFILE=jake-dev
+      # Host AWS credentials path (for passing to spawned generator containers)
+      - HOST_AWS_CREDENTIALS_PATH=/home/jake/.aws
+
+      # Feature Flags
+      - USE_AWS_ORCHESTRATOR=false
+      - USE_GITHUB_INTEGRATION=true
+
+      # Docker / Local Orchestrator
+      - WORKSPACE_DIR=/tmp/generations
+      - GENERATOR_IMAGE=gen:v1
+      - DOCKER_NETWORK=leo-monorepo-v2-network
+      - WS_HOST=happy-llama
+    volumes:
+      # Mount Docker socket for local Docker orchestration
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount workspace for generated apps (local mode)
+      - ./workspace:/tmp/generations
+      # Mount AWS credentials for Secrets Manager access
+      - ~/.aws:/root/.aws:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5013/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+networks:
+  default:
+    name: leo-monorepo-v2-network
+    external: true

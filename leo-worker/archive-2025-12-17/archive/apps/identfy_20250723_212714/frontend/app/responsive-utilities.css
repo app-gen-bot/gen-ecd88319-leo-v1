@@ -1,0 +1,89 @@
+/* Responsive utilities for mobile-first design */
+
+/* Hide scrollbar for mobile but keep functionality */
+@media (max-width: 768px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Responsive grid utilities */
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Responsive table wrapper */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile-optimized touch targets */
+@media (max-width: 768px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive text truncation */
+.truncate-mobile {
+  @media (max-width: 640px) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+  }
+}
+
+/* Stack layout on mobile */
+.stack-mobile {
+  @media (max-width: 640px) {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+
+/* Responsive padding adjustments */
+@media (max-width: 640px) {
+  .mobile-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Responsive modal/dialog sizing */
+@media (max-width: 640px) {
+  .mobile-dialog {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 4rem);
+    margin: 1rem;
+  }
+}
+
+/* Responsive chart container */
+.chart-container-mobile {
+  @media (max-width: 640px) {
+    height: 250px !important;
+  }
+}
+
+/* Mobile navigation fixes */
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-only {
+    display: none !important;
+  }
+}

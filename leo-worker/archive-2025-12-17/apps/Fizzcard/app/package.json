@@ -1,0 +1,47 @@
+{
+  "name": "fizzcard",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "FizzCard - Next-generation contact sharing platform with crypto rewards",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "start": "npm run start:server",
+    "start:server": "cd server && npm start",
+    "seed:network": "node seed-network.js",
+    "typecheck": "npm run typecheck:server && npm run typecheck:client",
+    "typecheck:server": "cd server && npx tsc --noEmit",
+    "typecheck:client": "cd client && npx tsc --noEmit",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules client/dist server/dist",
+    "fund:wallet": "node fund-wallet-final.js",
+    "fund:wallet:automated": "node fund-wallet-no-mainnet.js",
+    "fund:wallet:simple": "node fund-wallet-simple.js",
+    "check:balance": "node verify-wallet-balance.js",
+    "test:blockchain": "./test-blockchain-connection.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "playwright": "^1.56.1",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
+    "drizzle-orm": "^0.44.7"
+  }
+}

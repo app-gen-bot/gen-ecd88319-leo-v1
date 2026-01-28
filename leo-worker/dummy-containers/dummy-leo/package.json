@@ -1,0 +1,12 @@
+{
+  "name": "dummy-leo",
+  "version": "1.0.0",
+  "description": "Dummy WebSocket client for Fargate networking tests",
+  "main": "client.js",
+  "scripts": {
+    "start": "node client.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
+  }
+}

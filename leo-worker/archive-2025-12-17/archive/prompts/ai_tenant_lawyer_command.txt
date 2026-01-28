@@ -1,0 +1,6 @@
+# Direct command to run the AI Tenant Lawyer app generation:
+
+uv run python -m app_factory.main_v2 --user-prompt "$(cat prompts/ai_tenant_lawyer_prompt.md)" --iterative-stage-1
+
+# Or if you prefer the script:
+./run_ai_lawyer_app.sh

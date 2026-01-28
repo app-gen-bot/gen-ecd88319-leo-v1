@@ -1,0 +1,278 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# Python virtual environment lib directories only
+venv/lib/
+env/lib/
+ENV/lib/
+.venv/lib/
+.env/lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Production builds
+/build
+/dist
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.original
+# Keep these
+!.env.example
+!.env.production
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Testing
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Project-specific ignores
+template-comparison/
+Left_Off_*.md
+
+# Allow apps directory but exclude build artifacts and dependencies
+# Keep source files (.md, .html, .js, .ts, .py, .json, etc.)
+# Exclude build/runtime artifacts
+apps/**/node_modules/
+apps/**/dist/
+apps/**/build/
+apps/**/.next/
+apps/**/out/
+apps/**/__pycache__/
+apps/**/*.pyc
+apps/**/package-lock.json
+apps/**/yarn.lock
+apps/**/.env
+apps/**/.env.local
+apps/**/.env.development.local
+apps/**/.env.test.local
+apps/**/.env.production.local
+apps/**/logs/
+apps/**/*.log
+
+# Allow specific notetaker app artifacts that demonstrate automation success
+!apps/notetaker/
+!apps/notetaker/plan/
+!apps/notetaker/preview-html/
+!apps/notetaker/preview-react/
+!apps/notetaker/app/
+apps/notetaker/app/node_modules/
+apps/notetaker/app/dist/
+apps/notetaker/app/.env
+apps/notetaker/app/package-lock.json
+apps/notetaker/app/*.log
+
+# Allow timeless-weddings app artifacts
+!apps/timeless-weddings/
+!apps/timeless-weddings/plan/
+!apps/timeless-weddings/preview-html/
+!apps/timeless-weddings/preview-react/
+!apps/timeless-weddings/app/
+!apps/timeless-weddings/docs/
+!apps/timeless-weddings/FIS_DECOMP/
+!apps/timeless-weddings/*.md
+apps/timeless-weddings/app/node_modules/
+apps/timeless-weddings/app/dist/
+apps/timeless-weddings/app/.env
+apps/timeless-weddings/app/package-lock.json
+apps/timeless-weddings/app/*.log
+
+# Allow leo-saas app (App Factory SaaS web interface)
+!apps/leo-saas/
+!apps/leo-saas/app/
+!apps/leo-saas/docs/
+apps/leo-saas/app/node_modules/
+apps/leo-saas/app/dist/
+apps/leo-saas/app/.env
+apps/leo-saas/app/package-lock.json
+apps/leo-saas/app/*.log
+
+# Temporary V1 code
+v1_appfactory/
+
+# Screenshots from testing
+screenshots/
+route_testing_screenshots/
+!replit-examples/todo-list/screenshots
+
+# Test outputs from standalone agent tests
+test_outputs/generated_prds/
+
+# Agent context session files
+.agent_context/
+src/.agent_context/
+
+# Pipeline checkpoint files
+checkpoints/
+
+# React Preview System generated artifacts
+src/react_preview_system/output/*.html
+
+# Local prompt files and scripts (keep in repo if needed)
+# prompts/
+# run-*.sh
+generated_images/

@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-10-11T23:47:42.796315",
+  "app_dir": "apps/timeless-weddings-phase1/app",
+  "tests": [
+    {
+      "test_name": "TechnicalArchitectureSpecAgent Context",
+      "passed": true,
+      "details": [
+        "Schema exists: apps/timeless-weddings-phase1/app/shared/schema.zod.ts",
+        "Contracts found: 5 files",
+        "Schema-driven content detected",
+        "API-aware content detected"
+      ]
+    },
+    {
+      "test_name": "LLM-Based Page Extraction",
+      "passed": true,
+      "details": [
+        "LLM extraction method exists",
+        "Extracted 15 pages",
+        "Page structure validated"
+      ]
+    },
+    {
+      "test_name": "FISPageAgent Full Context",
+      "passed": true,
+      "details": [
+        "All context parameters present",
+        "Page specs not generated yet"
+      ]
+    },
+    {
+      "test_name": "Pipeline Order",
+      "passed": false,
+      "details": [
+        "INCORRECT pipeline order"
+      ]
+    },
+    {
+      "test_name": "End-to-End Flow",
+      "passed": false,
+      "details": [
+        "Schema: \u2713",
+        "Contracts: \u2713",
+        "API Client: \u2713",
+        "Tech Spec: \u2713",
+        "FIS Master: \u2713",
+        "Page Specs Directory: \u2717"
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 5,
+    "success_rate": "60.0%"
+  }
+}

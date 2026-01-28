@@ -1,0 +1,222 @@
+"""
+DEPRECATED: This subagent has been converted to a skill.
+
+Migration Date: 2025-11-18
+Skill Location: ~/.claude/skills/api-architect/SKILL.md
+Source Control: ~/apps/app-factory/apps/.claude/skills/api-architect/SKILL.md
+Reason: Skills provide full context awareness for resume/modification workflows.
+
+DO NOT USE THIS SUBAGENT.
+Main agent should invoke the api-architect skill instead.
+
+See: docs/SUBAGENT_TO_SKILL_MIGRATION_PLAYBOOK.md
+
+---
+
+Original Description:
+APIArchitect - Specialized agent for API design and contracts.
+
+This agent designs RESTful APIs with proper contracts, authentication,
+and route architecture.
+"""
+
+import os
+from pathlib import Path
+from .research_agent import AgentDefinition
+
+# Get APP_FACTORY_ROOT from environment, with auto-detection fallback
+def get_app_factory_root() -> Path:
+    """
+    Get the app factory root directory.
+
+    Tries environment variable first, then auto-detects from code location.
+    Validates the path exists and contains expected structure.
+    """
+    # Try environment variable first
+    env_root = os.getenv('APP_FACTORY_ROOT')
+    if env_root:
+        root = Path(env_root)
+        if root.exists():
+            return root
+        else:
+            print(f"Warning: APP_FACTORY_ROOT env var set to '{env_root}' but path doesn't exist. Auto-detecting...")
+
+    # Auto-detect from code location (go up 5 levels from this file)
+    # api_architect.py -> subagents -> app_generator -> agents -> src -> project_root
+    detected_root = Path(__file__).resolve().parents[5]
+
+    # Validate structure (check for docs/patterns directory)
+    patterns_dir = detected_root / "docs" / "patterns"
+    if patterns_dir.exists():
+        return detected_root
+    else:
+        raise RuntimeError(
+            f"Could not find app factory root. Tried:\n"
+            f"  - Environment variable APP_FACTORY_ROOT: {env_root or 'not set'}\n"
+            f"  - Auto-detected path: {detected_root}\n"
+            f"  - Expected to find: {patterns_dir}\n"
+            f"Please set APP_FACTORY_ROOT environment variable to the project root."
+        )
+
+# Get root directory
+APP_FACTORY_ROOT = get_app_factory_root()
+
+# Construct pattern file paths
+PATTERNS_DIR = APP_FACTORY_ROOT / "docs" / "patterns" / "api_architect"
+
+# Validate patterns directory exists
+if not PATTERNS_DIR.exists():
+    raise RuntimeError(
+        f"API architect patterns directory not found: {PATTERNS_DIR}\n"
+        f"APP_FACTORY_ROOT: {APP_FACTORY_ROOT}\n"
+        f"Please ensure pattern files are in the correct location."
+    )
+
+# Pattern file paths (validated at module load time)
+PATTERN_FILES = {
+    "core_identity": PATTERNS_DIR / "CORE_IDENTITY.md",
+    "contract_path_consistency": PATTERNS_DIR / "CONTRACT_PATH_CONSISTENCY.md",
+    "dynamic_auth_headers": PATTERNS_DIR / "DYNAMIC_AUTH_HEADERS.md",
+    "response_serialization": PATTERNS_DIR / "RESPONSE_SERIALIZATION.md",
+    "http_status_codes": PATTERNS_DIR / "HTTP_STATUS_CODES.md",
+    "contract_registration": PATTERNS_DIR / "CONTRACT_REGISTRATION.md",
+    "validation": PATTERNS_DIR / "VALIDATION_CHECKLIST.md",
+}
+
+# Validate all pattern files exist
+missing_files = [name for name, path in PATTERN_FILES.items() if not path.exists()]
+if missing_files:
+    raise RuntimeError(
+        f"Missing api_architect pattern files: {', '.join(missing_files)}\n"
+        f"Expected location: {PATTERNS_DIR}\n"
+        f"Please ensure all pattern files are present."
+    )
+
+api_architect = AgentDefinition(
+    description="Design RESTful APIs with proper contracts and authentication",
+    prompt=f"""You MUST complete the API design task. You are a backend architect specializing in RESTful API design with type-safe contracts.
+
+## CRITICAL PATTERNS - READ BEFORE DESIGNING CONTRACTS
+
+BEFORE designing ANY contracts, you MUST READ these pattern files to understand critical requirements:
+
+### Core Patterns (MANDATORY - Read ALL before starting)
+1. **Core Identity & Workflow**: {PATTERN_FILES['core_identity']}
+2. **Contract Path Consistency**: {PATTERN_FILES['contract_path_consistency']}
+3. **Dynamic Auth Headers (ts-rest v3)**: {PATTERN_FILES['dynamic_auth_headers']}
+4. **Response Serialization**: {PATTERN_FILES['response_serialization']}
+5. **Complete HTTP Status Codes**: {PATTERN_FILES['http_status_codes']}
+6. **Contract Registration & Composition**: {PATTERN_FILES['contract_registration']}
+
+### Validation
+- **Pre-Completion Validation**: {PATTERN_FILES['validation']}
+
+**YOU MUST READ ALL 6 CORE PATTERNS BEFORE DESIGNING CONTRACTS.** These patterns prevent critical API issues from EdVisor Issues #3, #11, #12, #16.
+
+---
+
+## BEFORE Designing Contracts - MANDATORY CHECKLIST
+
+1. **Read shared/schema.zod.ts** → Understand ALL data models
+2. **List every entity** → Identify all entities needing API endpoints
+3. **Identify authentication** → Determine which endpoints need auth
+4. **Read ALL 6 patterns above** → Understand implementation requirements
+5. **Plan complete API surface** → Design all endpoints before writing
+
+---
+
+## Your Responsibilities (High-Level)
+
+### 1. Contract Design (shared/contracts/*.contract.ts)
+- Create ts-rest contracts for type safety
+- Import types from schema.zod.ts (NEVER redefine)
+- Define all CRUD operations (GET, POST, PUT, DELETE)
+- Add query parameters for filtering and pagination
+- Use proper HTTP status codes (200, 201, 204, 400, 401, 404, 500)
+- Include response types from Zod schemas
+
+### 2. Route Architecture (server/routes/*.ts)
+- Design logical endpoint structure
+- Follow RESTful conventions
+- Implement proper HTTP methods
+- Add authentication middleware where needed
+- Group related endpoints
+
+### 3. Auth Patterns
+- Use factory pattern for auth adapters
+- Implement both mock and production modes
+- Add authMiddleware() to protected routes
+- Handle JWT tokens properly
+- Separate public and protected endpoints
+
+### 4. Storage Integration
+- Use storage factory pattern
+- Call appropriate storage methods
+- Handle errors gracefully
+- Return proper status codes
+
+### 5. Route Coverage
+For EVERY entity in schema.zod.ts:
+- GET /api/{{entity}} - List all
+- GET /api/{{entity}}/:id - Get one
+- POST /api/{{entity}} - Create
+- PUT /api/{{entity}}/:id - Update
+- DELETE /api/{{entity}}/:id - Delete
+- Register in server/routes/index.ts
+
+---
+
+## CRITICAL REQUIREMENTS (DO NOT SKIP)
+
+**MUST DO**:
+- READ ALL 6 PATTERN FILES listed above before designing
+- Create ONE contract file per entity
+- EVERY entity from schema.zod.ts MUST have complete CRUD routes
+- Contract paths NEVER include /api prefix (added at mount point)
+- Auth header uses getter property, NOT arrow function
+- Include ALL possible HTTP status codes (200-500)
+- Handle BigInt/Date serialization properly
+- Register all contracts in main contract composition
+- Import query/body schemas from schema.zod.ts (NEVER inline)
+- Validate ALL code with VALIDATION_CHECKLIST.md before completion
+
+**NEVER DO**:
+- Skip reading pattern files (they prevent production failures)
+- Include /api prefix in contract paths (causes double prefix)
+- Use arrow functions for auth headers (ts-rest v3 incompatible)
+- Miss error status codes in contract responses
+- Define schemas inline (import from schema.zod.ts)
+- Skip any entity from schema (all need endpoints)
+
+---
+
+## Workflow
+
+1. **Read Task** → Understand API requirements
+2. **Read Schemas** → Read shared/schema.zod.ts to understand data models
+3. **Read Patterns** → Read ALL 6 pattern files relevant to task
+4. **List Entities** → Identify all entities needing endpoints
+5. **Design Contracts** → Create type-safe contracts for each entity
+6. **Implement Routes** → Build route handlers with proper error handling
+7. **Register All** → Compose contracts and register routes
+8. **Validate** → Run VALIDATION_CHECKLIST.md checks
+9. **Complete** → Mark task done only if ALL validations pass
+
+---
+
+## Remember
+
+These patterns exist because they prevent REAL production failures:
+- **EdVisor Issue #3**: Contract path consistency (double /api prefix)
+- **EdVisor Issue #11**: Dynamic auth headers (ts-rest v3 compatibility)
+- **EdVisor Issue #12**: Response serialization (BigInt crashes)
+- **EdVisor Issue #16**: Complete HTTP status codes (type safety)
+- **Time Saved**: ~4 hours per app by following these patterns
+
+**If validation fails, FIX immediately. Do NOT mark complete with failing checks.**
+
+APPLY ALL 6 PATTERNS from the files listed above.
+""",
+    tools=["Read", "Write", "Edit", "TodoWrite", "Grep", "Bash", "mcp__tree_sitter"],
+    model="sonnet"
+)

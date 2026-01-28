@@ -1,0 +1,1 @@
+"""Package manager MCP server for secure npm package management."""

@@ -1,0 +1,71 @@
+{
+  "description": "Approved packages for the opinionated frontend stack",
+  "last_updated": "2025-01-08",
+  "packages": {
+    "core": {
+      "description": "Core React and Next.js packages",
+      "packages": [
+        "react",
+        "react-dom",
+        "next"
+      ]
+    },
+    "ui": {
+      "description": "UI and styling packages",
+      "packages": [
+        "@radix-ui/react-label",
+        "@radix-ui/react-select", 
+        "@radix-ui/react-slot",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-dropdown-menu",
+        "@radix-ui/react-tabs",
+        "class-variance-authority",
+        "clsx",
+        "tailwind-merge",
+        "tailwindcss",
+        "postcss",
+        "autoprefixer",
+        "lucide-react"
+      ]
+    },
+    "forms": {
+      "description": "Form handling and validation",
+      "packages": [
+        "react-hook-form",
+        "@hookform/resolvers",
+        "zod"
+      ]
+    },
+    "state": {
+      "description": "State management and data fetching",
+      "packages": [
+        "@tanstack/react-query",
+        "@tanstack/react-table",
+        "zustand"
+      ]
+    },
+    "development": {
+      "description": "Development and build tools",
+      "packages": [
+        "typescript",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "eslint",
+        "eslint-config-next",
+        "@typescript-eslint/parser",
+        "@typescript-eslint/eslint-plugin"
+      ]
+    },
+    "testing": {
+      "description": "Testing utilities",
+      "packages": [
+        "@testing-library/react",
+        "@testing-library/jest-dom",
+        "@testing-library/user-event",
+        "jest",
+        "jest-environment-jsdom"
+      ]
+    }
+  }
+}

@@ -1,0 +1,719 @@
+=== Dev server started at 2026-01-06T01:03:13.219498 ===
+Port: 5173
+PID: 1674
+Working directory: /workspace/app
+==================================================
+
+> launch-platform@1.0.0 dev
+> concurrently "npm run server" "npm run client"
+
+[0] 
+[0] > launch-platform@1.0.0 server
+[0] > tsx watch server/index.ts
+[0] 
+[1] 
+[1] > launch-platform@1.0.0 client
+[1] > vite
+[1] 
+[1] 
+[1]   VITE v5.4.20  ready in 139 ms
+[1] 
+[1]   ➜  Local:   http://localhost:5173/
+[1]   ➜  Network: use --host to expose
+[1] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[0] 💾 Storage Mode: DATABASE
+[0] [Stripe] STRIPE_SECRET_KEY not configured - subscription features disabled
+[0] 🔐 Loading configuration from AWS Secrets Manager (leo/*)...
+[0]    ✅ Loaded: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL, CLAUDE_CODE_OAUTH_TOKEN, GITHUB_BOT_TOKEN, FLY_API_TOKEN, SUPABASE_ACCESS_TOKEN, OPENAI_API_KEY
+[0] ✅ Configuration loaded successfully
+[0] 
+[0] Configuration:
+[0]    Orchestrator: Local Docker
+[0]    GitHub: Disabled
+[0]    Port: 5000
+[0]    Supabase: ht****co
+[0]    Supabase Access Token: sb****63
+[0] 
+[0] 📎 Feedback Attachment Storage: Using key ending with: ...H1Dn9ZhfvxZVsDMRgpPs
+[0] 📎 Feedback Attachment Storage: Supabase client initialized
+[0] 🚀 Starting Leo Server...
+[0] 📦 Version: dev
+[0] 🔌 WSI Server attached at /wsi
+[0] 🐳 Container Mode: DOCKER LOCAL (development)
+[0] 🐳 Docker Manager initialized
+[0]    Image: leo-container:test
+[0]    WebSocket: ws://host.docker.internal:5000/wsi
+[0]    Timeout: 24h
+[0]    Resources: 2 CPUs, 4GB RAM
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Startup cleanup failed: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] [Stale Cleanup] Checking for generations stuck since: 2026-01-05T23:03:16.034Z
+[0] [Database Storage] LAZY INIT - Connection: postgresql://postgres.fwhwbmjwbdvmnrpszirc:****@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+[0] [Database Storage] Drizzle ORM initialized
+[0] [Stale Cleanup] 🔄 Periodic cleanup started (every 15 minutes)
+[0] 
+[0] ═══════════════════════════════════════════════════════════════
+[0] 🚀 Leo Server - Production Ready with Security
+[0] ═══════════════════════════════════════════════════════════════
+[0] 
+[0] 📦 SAAS Version: 82f741b2
+[0] ✅ Server running on http://localhost:5000
+[0] 🔌 WSI Server ready on ws://localhost:5000/wsi
+[0] 
+[0] 📡 API Endpoints:
+[0]    POST /api/generations        - Create new generation
+[0]    GET  /api/generations        - List generations
+[0]    GET  /api/generations/:id    - Get generation details
+[0]    GET  /api/generations/:id/download - Download generated app
+[0]    POST /api/generations/:id/deploy   - Deploy to Fly.io
+[0]    GET  /health                 - Health check
+[0] 
+[0] 🔐 Security Features:
+[0]    ✓ Helmet security headers
+[0]    ✓ HSTS enforcement
+[0]    ✓ Content Security Policy
+[0]    ✓ Rate limiting (API, Auth, Generation)
+[0]    ✓ Sensitive path blocking
+[0]    ✓ Input validation & sanitization
+[0]    ✓ XSS protection
+[0]    ✓ Request size limits
+[0] 
+[0] 🔐 Auth: Frontend → Supabase SDK (JWT validation on backend)
+[0] 
+[0] ═══════════════════════════════════════════════════════════════
+[0] 
+[0] [Feedback Attachment Storage] Bucket ready: feedback-attachments
+[0] [Stale Cleanup] No stale generations found
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] [2026-01-06T01:04:00.551Z] GET /health
+[0]   └─ Auth: ❌ No Auth (NONE)
+[0]   └─ Origin: NONE
+[0]   └─ IP: ::1
+[0]   └─ User-Agent: curl/8.14.1
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
+[0] ❌ Failed to initialize Docker Events listener: Error: connect ENOENT /var/run/docker.sock
+[0]     at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+[0]   errno: -2,
+[0]   code: 'ENOENT',
+[0]   syscall: 'connect',
+[0]   address: '/var/run/docker.sock'
+[0] }
