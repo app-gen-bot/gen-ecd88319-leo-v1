@@ -1,26 +1,49 @@
 #!/bin/bash
 #
-# run-leo.sh - Start Leo SaaS container
-#
-# NO FAF POLICY: Run locally exactly like Fargate
-# - Same image tag (commit hash, not 'latest')
-# - Secrets from AWS Secrets Manager (not .env.local)
-# - Only pass AWS credentials and local-only settings
+# run-leo.sh - Start Leo SaaS container (Mono-Repo)
 #
 # Usage:
-#   ./scripts/run-leo.sh              # Start container (foreground logs)
-#   ./scripts/run-leo.sh --detach     # Start container (background)
+#   ./scripts/run-leo.sh              # Start with dev database (default)
+#   ./scripts/run-leo.sh --prod       # Start with production database
+#   ./scripts/run-leo.sh --detach     # Start in background
+#   ./scripts/run-leo.sh --prod -d    # Prod + background
 
 set -e
 
 # Configuration
-RUNNER_DIR="$HOME/WORK/LEO/saas-dev-agent/repos/gen-219eda6b-032862af"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+BUILD_STATE="$PROJECT_DIR/.build-state"
+
 CONTAINER_NAME="leo-saas-generated"
 IMAGE_NAME="leo-saas-generated"
 PORT="${LEO_PORT:-5013}"
 
+# Parse arguments
 DETACH=false
-[[ "$1" == "--detach" || "$1" == "-d" ]] && DETACH=true
+USE_PROD_DB=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --detach|-d) DETACH=true ;;
+        --prod) USE_PROD_DB=true ;;
+        --help|-h)
+            echo "Usage: $0 [--prod] [--detach|-d]"
+            echo "  --prod      Use production database (default: dev)"
+            echo "  --detach    Run in background"
+            exit 0
+            ;;
+    esac
+done
+
+# Set secrets prefix based on database choice
+if $USE_PROD_DB; then
+    SECRETS_PREFIX="leo"
+    DB_ENV="prod"
+else
+    SECRETS_PREFIX="leo-dev"
+    DB_ENV="dev"
+fi
 
 # Colors
 RED='\033[0;31m'
@@ -34,12 +57,10 @@ log_success() { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Check if port is already in use (by something other than our container)
+# Check if port is already in use
 check_port() {
-    # Only check for LISTEN sockets, not ESTABLISHED connections
     local port_pid=$(lsof -ti :${PORT} -sTCP:LISTEN 2>/dev/null | head -1)
     if [[ -n "$port_pid" ]]; then
-        # Check if it's our container
         local container_id=$(docker ps -q -f name="$CONTAINER_NAME" 2>/dev/null)
         if [[ -z "$container_id" ]]; then
             log_error "Port ${PORT} is already in use by another process (PID: $port_pid)"
@@ -52,35 +73,29 @@ check_port() {
 
 check_port
 
-# Get current commit (used for image tag - No FAF policy)
-CURRENT_COMMIT=$(cd "$RUNNER_DIR" && git rev-parse --short HEAD 2>/dev/null || echo "")
-if [[ -z "$CURRENT_COMMIT" ]]; then
-    log_error "Could not determine commit hash from $RUNNER_DIR"
-    exit 1
-fi
-
-# Detect host architecture
-HOST_ARCH=$(uname -m)
-case "$HOST_ARCH" in
-    arm64|aarch64) IMAGE_ARCH="arm64" ;;
-    x86_64)        IMAGE_ARCH="amd64" ;;
-    *)             IMAGE_ARCH="amd64" ;; # fallback
-esac
-
-IMAGE_TAG="$CURRENT_COMMIT-$IMAGE_ARCH"
-
-# Check if image exists with commit-arch tag
-if ! docker image inspect "$IMAGE_NAME:$IMAGE_TAG" &>/dev/null; then
-    log_error "Image $IMAGE_NAME:$IMAGE_TAG not found"
+# Read build state
+if [[ ! -f "$BUILD_STATE" ]]; then
+    log_error ".build-state not found!"
     log_error "Run ./scripts/build.sh first"
     exit 1
 fi
 
-# Load minimal local config (only local-only settings, not secrets)
-if [[ -f "$RUNNER_DIR/.env.local" ]]; then
-    set -a
-    source "$RUNNER_DIR/.env.local"
-    set +a
+source "$BUILD_STATE"
+
+if [[ -z "$LEO_CONTAINER" || -z "$LEO_SAAS" ]]; then
+    log_error ".build-state is invalid"
+    log_error "Run ./scripts/build.sh first"
+    exit 1
+fi
+
+COMMIT="$LEO_SAAS"
+IMAGE_TAG="$COMMIT-$IMAGE_ARCH"
+
+# Check if image exists
+if ! docker image inspect "$IMAGE_NAME:$IMAGE_TAG" &>/dev/null; then
+    log_error "Image $IMAGE_NAME:$IMAGE_TAG not found"
+    log_error "Run ./scripts/build.sh first"
+    exit 1
 fi
 
 # Get AWS credentials for Secrets Manager access
@@ -95,7 +110,7 @@ fi
 
 if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
     log_error "AWS credentials not found. Configure with: aws configure --profile $AWS_PROFILE"
-    log_error "App needs AWS access to read secrets from Secrets Manager (leo/* prefix)"
+    log_error "App needs AWS access to read secrets from Secrets Manager (${SECRETS_PREFIX}/* prefix)"
     exit 1
 fi
 
@@ -110,26 +125,30 @@ fi
 # Also remove stopped container if exists
 docker rm "$CONTAINER_NAME" 2>/dev/null || true
 
+# Get generator image tag
+GENERATOR_IMAGE="leo-container:$COMMIT-$IMAGE_ARCH"
+
 echo ""
 echo "=========================================="
-echo "  Leo SaaS Runner (No FAF Mode)"
+echo "  Leo SaaS Runner (Mono-Repo)"
+echo "  Database: $DB_ENV"
 echo "=========================================="
 echo ""
 
 log_info "Starting Leo SaaS container..."
 log_info "  Image: $IMAGE_NAME:$IMAGE_TAG"
+log_info "  Generator: $GENERATOR_IMAGE"
 log_info "  Architecture: $IMAGE_ARCH"
-log_info "  Secrets: AWS Secrets Manager (leo/*)"
+log_info "  Secrets: AWS Secrets Manager (${SECRETS_PREFIX}/*)"
 
 # Run container
-# - NO secrets passed via -e (app reads from AWS Secrets Manager)
-# - Only pass: AWS creds, local settings, Docker socket
 docker run -d \
     --name "$CONTAINER_NAME" \
     -p ${PORT}:${PORT} \
     \
     -e NODE_ENV=production \
     -e PORT=${PORT} \
+    -e SECRETS_PREFIX="$SECRETS_PREFIX" \
     \
     -e AWS_REGION="$AWS_REGION" \
     -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
@@ -138,7 +157,7 @@ docker run -d \
     \
     -e USE_AWS_ORCHESTRATOR=false \
     -e USE_GITHUB_INTEGRATION="${USE_GITHUB_INTEGRATION:-true}" \
-    -e GENERATOR_IMAGE="${GENERATOR_IMAGE:?GENERATOR_IMAGE must be set (e.g., leo-container:abc123)}" \
+    -e GENERATOR_IMAGE="$GENERATOR_IMAGE" \
     -e SUPABASE_MODE="${SUPABASE_MODE:-per-app}" \
     ${LEO_EFS_PATH:+-e LEO_EFS_PATH="$LEO_EFS_PATH"} \
     \
