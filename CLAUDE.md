@@ -75,9 +75,29 @@ Scripts read Supabase credentials from AWS Secrets Manager using these prefixes.
 | `leo-worker/` | V0's `app-factory/leo-container/` |
 | `scripts/` | `saas-dev-agent/scripts/` (adapted for mono-repo) |
 
+## Credentials
+
+Scripts fetch secrets from AWS Secrets Manager at build/run time. Source credentials:
+
+| Location | Contains |
+|----------|----------|
+| `~/.secrets/supabase-credentials.md` | Master reference for all Supabase projects |
+| `~/.secrets/dev.env` | Claude token, pool credentials |
+| `/Users/jake/WORK/SAAS/repos-v2/gen-ecd88319-leo-v2/leo-web/.env.local` | V2 dev database (vkzbhsuzsowpdebvupyx) |
+| `/Users/jake/WORK/SAAS/deployments/.env.leo-stack-old-*` | Production credentials |
+
+AWS secrets created from these sources:
+- `leo-dev/supabase-url`, `leo-dev/supabase-anon-key` → dev database
+- `leo/supabase-url`, `leo/supabase-anon-key` → prod database
+
 ## Key Differences from Multi-Repo (V0)
 
 1. Single git commit for both components
 2. No git fetch/checkout in build scripts (mono-repo)
 3. Relative paths from script location (not hardcoded `$HOME/...`)
 4. `.build-state` stores commit + arch for run-leo.sh to use
+
+## See Also
+
+- `/Users/jake/WORK/SAAS/CLAUDE.md` - Overall SAAS workspace structure, V0/V1/V2 context
+- `/Users/jake/WORK/SAAS/V1/CLAUDE.md` - V1 quick reference
