@@ -8,7 +8,9 @@ import { detectMode, obfuscate, type RuntimeMode } from '../lib/config/secrets.j
  * - Local: App reads from AWS Secrets Manager directly
  * - Fargate: CDK reads from AWS Secrets Manager at deploy time, injects as env vars
  *
- * Secret prefix: leo/*
+ * Secret prefix: Determined by SECRETS_PREFIX env var (default: 'leo')
+ * - 'leo' = production database
+ * - 'leo-dev' = development database
  */
 
 export interface ValidationResult {
@@ -60,21 +62,23 @@ async function loadSecret(awsName: string, envName: string): Promise<boolean> {
 }
 
 /**
- * Load all configuration from AWS Secrets Manager (leo/* prefix)
+ * Load all configuration from AWS Secrets Manager
+ * Uses SECRETS_PREFIX env var (default: 'leo') to support dev/prod switching
  */
 async function loadFromAWS(): Promise<{ loaded: string[]; failed: string[] }> {
-  console.log('🔐 Loading configuration from AWS Secrets Manager (leo/*)...');
+  const prefix = process.env.SECRETS_PREFIX || 'leo';
+  console.log(`🔐 Loading configuration from AWS Secrets Manager (${prefix}/*)...`);
 
   const secrets = [
-    { aws: 'leo/supabase-url', env: 'SUPABASE_URL' },
-    { aws: 'leo/supabase-anon-key', env: 'SUPABASE_ANON_KEY' },
-    { aws: 'leo/supabase-service-role-key', env: 'SUPABASE_SERVICE_ROLE_KEY' },
-    { aws: 'leo/database-url', env: 'DATABASE_URL' },
-    { aws: 'leo/claude-oauth-token', env: 'CLAUDE_CODE_OAUTH_TOKEN' },
-    { aws: 'leo/github-bot-token', env: 'GITHUB_BOT_TOKEN' },
-    { aws: 'leo/fly-api-token', env: 'FLY_API_TOKEN' },
-    { aws: 'leo/supabase-access-token', env: 'SUPABASE_ACCESS_TOKEN' },
-    { aws: 'leo/openai-api-key', env: 'OPENAI_API_KEY' },
+    { aws: `${prefix}/supabase-url`, env: 'SUPABASE_URL' },
+    { aws: `${prefix}/supabase-anon-key`, env: 'SUPABASE_ANON_KEY' },
+    { aws: `${prefix}/supabase-service-role-key`, env: 'SUPABASE_SERVICE_ROLE_KEY' },
+    { aws: `${prefix}/database-url`, env: 'DATABASE_URL' },
+    { aws: `${prefix}/claude-oauth-token`, env: 'CLAUDE_CODE_OAUTH_TOKEN' },
+    { aws: `${prefix}/github-bot-token`, env: 'GITHUB_BOT_TOKEN' },
+    { aws: `${prefix}/fly-api-token`, env: 'FLY_API_TOKEN' },
+    { aws: `${prefix}/supabase-access-token`, env: 'SUPABASE_ACCESS_TOKEN' },
+    { aws: `${prefix}/openai-api-key`, env: 'OPENAI_API_KEY' },
   ];
 
   const loaded: string[] = [];
@@ -123,7 +127,8 @@ export async function loadConfig(): Promise<ValidationResult> {
     console.error('❌ Configuration validation failed');
     console.error('Missing required values:');
     validation.missing.forEach(key => console.error(`  - ${key}`));
-    console.error('\nEnsure secrets exist in AWS Secrets Manager with leo/* prefix');
+    const prefix = process.env.SECRETS_PREFIX || 'leo';
+    console.error(`\nEnsure secrets exist in AWS Secrets Manager with ${prefix}/* prefix`);
     console.error('Or check IAM permissions for Secrets Manager access');
     process.exit(1);
   } else {
