@@ -115,14 +115,12 @@ export class ProcessContainerManager extends EventEmitter implements IContainerM
         GENERATION_ID: requestId,
         PROMPT: prompt,
         MODE: mode,
-        GENERATOR_MODE: 'stub', // Indicate this is stub mode
+        GENERATOR_MODE: 'real', // Always real mode (not mock)
         MAX_ITERATIONS: String(maxIterations),
         APP_NAME: appName,
         USER_ID: userId,
         APP_ID: appId || requestId,
         IS_RESUME: config.isResume ? 'true' : 'false',
-        // Stub-specific settings
-        STUB_DELAY: process.env.STUB_DELAY || '0.3',
       };
 
       // Add database request ID if provided
@@ -130,8 +128,10 @@ export class ProcessContainerManager extends EventEmitter implements IContainerM
         env.DB_REQUEST_ID = String(dbRequestId);
       }
 
-      // Spawn TypeScript stub with npx tsx
-      const child = spawn('npx', ['tsx', this.STUB_PATH], {
+      // Spawn Python worker directly
+      console.log(`   Command: python ${this.STUB_PATH}`);
+
+      const child = spawn('python', [this.STUB_PATH], {
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false,
