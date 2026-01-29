@@ -12,12 +12,12 @@ class Config:
     ws_url: str
     generation_id: str
     workspace_path: str
-    generator_mode: str  # 'mock' or 'real'
+    generator_mode: str  # Always 'real' (mock mode removed)
     mode: str  # 'interactive', 'confirm_first', 'autonomous'
     max_iterations: int
     enable_expansion: bool
     log_level: str
-    claude_token: str | None  # Required for real mode
+    claude_token: str | None  # Required
 
     # WebSocket resilience configuration
     websocket_connect_timeout: int  # Connection timeout in seconds
@@ -39,14 +39,10 @@ class Config:
         if not self.generation_id:
             raise ValueError("GENERATION_ID is required")
 
-        # Generator mode validation
-        if self.generator_mode not in ['mock', 'real']:
-            raise ValueError(f"GENERATOR_MODE must be 'mock' or 'real', got: {self.generator_mode}")
-
-        # Real mode requires Claude token
-        if self.generator_mode == 'real' and not self.claude_token:
+        # Claude token is always required (mock mode removed)
+        if not self.claude_token:
             raise ValueError(
-                "CLAUDE_CODE_OAUTH_TOKEN is required for real mode. "
+                "CLAUDE_CODE_OAUTH_TOKEN is required. "
                 "Set environment variable: export CLAUDE_CODE_OAUTH_TOKEN=your-token"
             )
 
@@ -68,7 +64,7 @@ def load_config() -> Config:
         ws_url=os.environ.get('WS_URL', ''),
         generation_id=os.environ.get('GENERATION_ID', ''),
         workspace_path='/workspace',
-        generator_mode=os.environ.get('GENERATOR_MODE', 'mock'),
+        generator_mode=os.environ.get('GENERATOR_MODE', 'real'),
         mode=os.environ.get('MODE', 'autonomous'),
         max_iterations=int(os.environ.get('MAX_ITERATIONS', '10')),
         enable_expansion=os.environ.get('ENABLE_EXPANSION', 'false').lower() == 'true',

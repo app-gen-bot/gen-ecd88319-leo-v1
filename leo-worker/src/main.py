@@ -174,7 +174,6 @@ print("\n[INFO] Step 3: Validating credentials...")
 has_claude_token = os.environ.get('CLAUDE_CODE_OAUTH_TOKEN')
 has_anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
 has_supabase_token = os.environ.get('SUPABASE_ACCESS_TOKEN')
-generator_mode = os.environ.get('GENERATOR_MODE', 'real')
 
 # Check platform credentials
 has_github_token = os.environ.get('GITHUB_BOT_TOKEN')
@@ -197,10 +196,10 @@ if has_claude_token and has_anthropic_key:
     print("[INFO] ⚠️  Both CLAUDE_CODE_OAUTH_TOKEN and ANTHROPIC_API_KEY set")
     print("[INFO]    CLAUDE_CODE_OAUTH_TOKEN will be used (OAuth preferred over API key)")
 
-# User credentials are REQUIRED for real mode (either OAuth OR API key)
-if generator_mode == 'real' and not has_claude_token and not has_anthropic_key:
+# User credentials are REQUIRED (either OAuth OR API key)
+if not has_claude_token and not has_anthropic_key:
     print("\n❌ FATAL: User credentials not available")
-    print("   GENERATOR_MODE=real requires either:")
+    print("   Required (one of):")
     print("   - CLAUDE_CODE_OAUTH_TOKEN (OAuth token, recommended)")
     print("   - ANTHROPIC_API_KEY (API key, pay-per-use)")
     print("\n   Solution:")
