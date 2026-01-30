@@ -334,9 +334,9 @@ export class LeoSaasStack extends cdk.Stack {
     }
 
     // Generator container - optionally includes EFS mount point
-    // Note: Secrets (ANTHROPIC_API_KEY, SUPABASE_ACCESS_TOKEN, etc.) are loaded
-    // at runtime via aws_secrets.py, not via ECS task definition. This is simpler
-    // because it doesn't require CDK changes to add new secrets.
+    // Note: Generator gets CLAUDE_CODE_OAUTH_TOKEN passed via environment overrides
+    // from orchestrator at runtime (see fargate-container-manager.ts). No secrets
+    // block needed here.
     const generatorContainer = appGeneratorTaskDef.addContainer('leo', {
       containerName: 'leo',
       image: ecs.ContainerImage.fromEcrRepository(appGeneratorRepository, leoGeneratorTag),
