@@ -1,2 +1,4 @@
 logs/
 .build-state
+.build-state
+infrastructure/node_modules/
