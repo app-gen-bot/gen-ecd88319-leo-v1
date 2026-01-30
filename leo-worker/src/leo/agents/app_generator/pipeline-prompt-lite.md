@@ -26,14 +26,8 @@ The file must be:
 
 1. Read the user's request
 2. Create `index.html` with all content, styling, and interactivity inline
-3. Use the browser tool to verify it renders correctly
-4. Make minor adjustments if needed
+3. You are DONE
 
 ## Completion
 
-You are DONE when:
-- `index.html` exists
-- It renders without errors
-- It matches the user's request
-
-Keep it simple. This should complete in 1-3 iterations.
+Output "DONE" after creating `index.html`. Do not test or verify - just create the file and finish.
