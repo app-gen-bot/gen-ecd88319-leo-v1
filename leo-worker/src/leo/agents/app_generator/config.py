@@ -3,7 +3,14 @@ Configuration for the App Generator Agent.
 
 This agent generates complete full-stack applications from natural language prompts
 using the pipeline-prompt-v2.md system prompt.
+
+Leo-Lite mode (AGENT_MODE=leo-lite) uses simplified prompts for HTML-only generation.
 """
+
+import os
+
+# Agent mode: 'leo' (full) or 'leo-lite' (simple HTML)
+AGENT_MODE = os.environ.get('AGENT_MODE', 'leo')
 
 # Agent configuration
 AGENT_CONFIG = {
@@ -84,6 +91,7 @@ AGENT_CONFIG = {
 # Container paths (absolute - no dynamic resolution needed in container)
 # Pipeline prompts are co-located with the agent at /factory/leo/agents/app_generator/
 PIPELINE_PROMPT_PATH = "/factory/leo/agents/app_generator/pipeline-prompt-v2.md"
+PIPELINE_PROMPT_LITE_PATH = "/factory/leo/agents/app_generator/pipeline-prompt-lite.md"
 PROMPTING_GUIDE_PATH = "/factory/leo/agents/app_generator/PROMPTING-GUIDE.md"
 # Skills are at Anthropic standard location
 SKILLS_DIR = "/home/leo-user/.claude/skills"

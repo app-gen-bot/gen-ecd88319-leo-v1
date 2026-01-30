@@ -339,6 +339,8 @@ export class DockerContainerManager extends EventEmitter implements IContainerMa
         `GITHUB_BOT_TOKEN=${process.env.GITHUB_BOT_TOKEN || ''}`,
         `FLY_API_TOKEN=${process.env.FLY_API_TOKEN || ''}`,
         `IS_RESUME=${isResume ? 'true' : 'false'}`,
+        // Agent mode: 'leo' (full) or 'leo-lite' (simple HTML)
+        `AGENT_MODE=${process.env.AGENT_MODE || 'leo'}`,
         // Database request ID for WSI multi-session routing
         ...(dbRequestId !== undefined ? [`DB_REQUEST_ID=${dbRequestId}`] : []),
         // AWS credentials - injected as env vars (matches Fargate behavior)

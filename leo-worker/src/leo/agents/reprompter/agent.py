@@ -17,7 +17,7 @@ from cc_agent import Agent
 
 from .config import REPROMPTER_CONFIG, CONTEXT_CONFIG, MASTER_PLAN_PATH
 from .context_gatherer import ContextGatherer
-from .prompts import REPROMPTER_SYSTEM_PROMPT
+from .prompts import REPROMPTER_SYSTEM_PROMPT, REPROMPTER_LITE_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,16 @@ def _load_master_plan() -> str:
 
 
 def _build_enhanced_system_prompt() -> str:
-    """Build system prompt with master plan included."""
+    """Build system prompt with master plan included (or lite prompt for leo-lite mode)."""
+    import os
+    agent_mode = os.environ.get('AGENT_MODE', 'leo')
+
+    # Leo-Lite mode: use simplified reprompter
+    if agent_mode == 'leo-lite':
+        logger.info("🪶 Leo-Lite mode: using simplified reprompter")
+        return REPROMPTER_LITE_SYSTEM_PROMPT
+
+    # Full Leo mode: include master plan
     master_plan = _load_master_plan()
 
     if master_plan:

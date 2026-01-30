@@ -14,7 +14,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from cc_agent import Agent, find_latest_meaningful_session, find_sessions_for_cwd
-from .config import AGENT_CONFIG, PIPELINE_PROMPT_PATH, APPS_OUTPUT_DIR, PROMPTING_GUIDE_PATH, EXPANSION_CONFIG
+from .config import AGENT_CONFIG, PIPELINE_PROMPT_PATH, PIPELINE_PROMPT_LITE_PATH, APPS_OUTPUT_DIR, PROMPTING_GUIDE_PATH, EXPANSION_CONFIG, AGENT_MODE
 from .prompt_expander import PromptExpander
 from .git_helper import GitHelper
 
@@ -240,19 +240,23 @@ class AppGeneratorAgent:
 
     def _load_pipeline_prompt(self) -> str:
         """
-        Load the pipeline prompt from pipeline-prompt.md.
+        Load the pipeline prompt based on AGENT_MODE.
 
         Returns:
             The pipeline prompt content as a string.
 
         Raises:
-            FileNotFoundError: If pipeline-prompt.md doesn't exist.
+            FileNotFoundError: If pipeline prompt doesn't exist.
         """
-        prompt_path = Path(PIPELINE_PROMPT_PATH)
+        if AGENT_MODE == 'leo-lite':
+            prompt_path = Path(PIPELINE_PROMPT_LITE_PATH)
+            logger.info("🪶 Leo-Lite mode: using simplified prompt")
+        else:
+            prompt_path = Path(PIPELINE_PROMPT_PATH)
 
         if not prompt_path.exists():
             raise FileNotFoundError(
-                f"Pipeline prompt not found at: {PIPELINE_PROMPT_PATH}\n"
+                f"Pipeline prompt not found at: {prompt_path}\n"
                 f"Expected location: {prompt_path.absolute()}"
             )
 

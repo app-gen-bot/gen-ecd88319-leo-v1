@@ -159,6 +159,7 @@ docker run -d \
     -e USE_GITHUB_INTEGRATION="${USE_GITHUB_INTEGRATION:-true}" \
     -e GENERATOR_IMAGE="$GENERATOR_IMAGE" \
     -e SUPABASE_MODE="${SUPABASE_MODE:-per-app}" \
+    ${AGENT_MODE:+-e AGENT_MODE="$AGENT_MODE"} \
     ${LEO_EFS_PATH:+-e LEO_EFS_PATH="$LEO_EFS_PATH"} \
     \
     -v /var/run/docker.sock:/var/run/docker.sock \
