@@ -109,7 +109,8 @@ ENV PYTHONUNBUFFERED=1 \
     LOG_LEVEL=INFO \
     GENERATOR_MODE=real \
     PYTHONPATH=/factory \
-    APP_FACTORY_ROOT=/factory
+    APP_FACTORY_ROOT=/factory \
+    LEO_CONTAINER=true
 
 # Entry point - run the main application
 CMD ["python", "/factory/main.py"]
