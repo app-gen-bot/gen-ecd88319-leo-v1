@@ -231,6 +231,7 @@ export class LeoSaasStack extends cdk.Stack {
     supabaseAccessTokenSecret.grantRead(appGeneratorTaskRole);
     githubBotTokenSecret.grantRead(appGeneratorTaskRole);
     flyApiTokenSecret.grantRead(appGeneratorTaskRole);
+    openaiApiKeySecret.grantRead(appGeneratorTaskRole);
 
     const executionRole = new iam.Role(this, 'TaskExecutionRole', {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
