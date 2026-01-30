@@ -121,7 +121,7 @@ export class ProcessContainerManager extends EventEmitter implements IContainerM
         USER_ID: userId,
         APP_ID: appId || requestId,
         IS_RESUME: config.isResume ? 'true' : 'false',
-        AGENT_MODE: process.env.AGENT_MODE || 'leo', // Leo-Lite mode support
+        AGENT_MODE: 'leo-lite', // Inner Leo always uses simplified prompts
       };
 
       // Add database request ID if provided
