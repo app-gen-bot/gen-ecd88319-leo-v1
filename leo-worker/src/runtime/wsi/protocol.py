@@ -283,6 +283,20 @@ class ProcessMonitorMessage(WSIMessage):
     stats: Optional[Dict[str, Any]] = None  # {"tokens": {...}, "cost_usd": float, "tools": {...}}
 
 
+class FriendlyLogMessage(WSIMessage):
+    """
+    User-friendly status update for non-developer users.
+    Shows simple, non-technical progress messages.
+    Emitted at key generation phases (every 60s or at phase transitions).
+    NEW in v2.5
+    """
+    type: str = "friendly_log"
+    message: str  # User-friendly message (e.g., "Building your features...")
+    category: str  # "setup" | "planning" | "building" | "testing" | "deploying" | "done" | "working"
+    timestamp: str  # ISO timestamp
+    generation_id: Optional[str] = None
+
+
 # ============================================================================
 # Client  Server Messages
 # ============================================================================
@@ -417,6 +431,7 @@ class MessageParser:
         "screenshot": ScreenshotMessage,
         "summary_update": SummaryUpdateMessage,
         "process_monitor": ProcessMonitorMessage,
+        "friendly_log": FriendlyLogMessage,
         "start_generation": StartGenerationMessage,
     }
 
@@ -728,4 +743,29 @@ def create_process_monitor_message(
         summary=summary,
         trajectory=trajectory,
         stats=stats
+    )
+
+
+def create_friendly_log_message(
+    message: str,
+    category: str,
+    generation_id: Optional[str] = None
+) -> FriendlyLogMessage:
+    """
+    Create a user-friendly log message for non-developer users.
+
+    Args:
+        message: User-friendly message (e.g., "Building your features...")
+        category: One of: "setup", "planning", "building", "testing", "deploying", "done", "working"
+        generation_id: Optional ID of the current generation
+
+    Returns:
+        FriendlyLogMessage ready to send via WSI
+    """
+    from datetime import datetime
+    return FriendlyLogMessage(
+        message=message,
+        category=category,
+        timestamp=datetime.now().isoformat() + "Z",
+        generation_id=generation_id
     )

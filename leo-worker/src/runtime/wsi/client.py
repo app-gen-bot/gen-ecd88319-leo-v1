@@ -54,6 +54,7 @@ from .protocol import (
     create_shutdown_failed_message,
     create_conversation_log_message,
     create_screenshot_message,
+    create_friendly_log_message,
 )
 from .state_machine import StateMachine, ConnectionState
 from .config import (
@@ -1840,6 +1841,12 @@ class WSIClient:
             await self._send_message(create_log_message(f"  Prompt: {message.prompt[:LOG_TRUNCATE_PROMPT_DISPLAY]}{'...' if len(message.prompt) > LOG_TRUNCATE_PROMPT_DISPLAY else ''}", "info"))
             await self._send_message(create_log_message("=" * 50, "info"))
 
+            # Send friendly log for non-dev users
+            await self._send_message(create_friendly_log_message(
+                "Getting everything ready for your app...",
+                "setup"
+            ))
+
             # Store iteration state for the loop
             self.iteration_state = {
                 "mode": message.mode,
@@ -2199,6 +2206,11 @@ class WSIClient:
                     f"Executing iteration {iteration_num}...",
                     "info"
                 ))
+                # Send friendly log for non-dev users
+                await self._send_message(create_friendly_log_message(
+                    "Building your features...",
+                    "building"
+                ))
 
                 app_path, expansion_info = await self.agent.resume_generation(
                     self.iteration_state["app_path"],
@@ -2251,6 +2263,11 @@ class WSIClient:
                         f"Use `| head -c 100000` to truncate large outputs. Continuing to next iteration...",
                         "warn"
                     ))
+                    # Send friendly log for non-dev users
+                    await self._send_message(create_friendly_log_message(
+                        "Encountered a small issue, working around it...",
+                        "working"
+                    ))
                     # Push any partial work before continuing
                     try:
                         await self._save_sessions_periodically(app_path, iteration_num)
@@ -2263,6 +2280,11 @@ class WSIClient:
                 # Non-recoverable error - end generation
                 logger.error(f"Iteration {iteration_num} failed: {e}")
                 await self._send_message(create_log_message(f"Iteration failed: {e}", "error"))
+                # Send friendly log for non-dev users
+                await self._send_message(create_friendly_log_message(
+                    "We hit a snag, but your progress is saved.",
+                    "working"
+                ))
                 await self._finish_generation("error", app_path)
                 return
 
@@ -2333,6 +2355,11 @@ class WSIClient:
             git_manager = GitManager()
             if git_manager.is_enabled():
                 await self._send_message(create_log_message("Pushing to GitHub...", "info"))
+                # Send friendly log for non-dev users
+                await self._send_message(create_friendly_log_message(
+                    "Saving your app to the cloud...",
+                    "deploying"
+                ))
 
                 # Resume mode: If we cloned from an existing repo, push directly to it
                 # (don't construct new repo name from user_id which may differ from original)
@@ -2456,6 +2483,29 @@ class WSIClient:
         total_cost = CostTracker.get_instance().get_total()
         cost_summary = CostTracker.get_instance().get_summary()
         logger.info(f"Sending all_work_complete (total_cost=${total_cost:.4f}, calls={cost_summary['agent_calls']}, commit={github_commit}, warnings={len(warnings)}, credentials={len(credentials)})")
+
+        # Send friendly log for non-dev users - choose message based on completion reason
+        if completion_reason in ("autonomous_complete", "user_done"):
+            await self._send_message(create_friendly_log_message(
+                "Your app is ready!",
+                "done"
+            ))
+        elif completion_reason == "max_iterations":
+            await self._send_message(create_friendly_log_message(
+                "Your app has been built. You can continue adding features!",
+                "done"
+            ))
+        elif completion_reason == "error":
+            await self._send_message(create_friendly_log_message(
+                "We encountered an issue. Your progress has been saved.",
+                "working"
+            ))
+        else:
+            await self._send_message(create_friendly_log_message(
+                "Your app progress has been saved.",
+                "done"
+            ))
+
         complete_msg = create_all_work_complete_message(
             completion_reason=completion_reason,
             app_path=app_path,

@@ -15,11 +15,13 @@ import {
   type GenerationStoppedMessage,
   type ConversationLogMessage,
   type ScreenshotMessage,
+  type FriendlyLogMessage,  // v2.5: User-friendly status updates
   // Credential request/response (v2.2)
   type CredentialRequestMessage,
   type CredentialTimeoutWarningMessage,
   type CredentialValueEntry,
 } from '../lib/wsi-client';
+import { UserRole } from '../../../shared/schema.zod';
 
 /**
  * useWsi Hook - React integration for WSI Client
@@ -69,6 +71,7 @@ export interface UseWsiReturn extends WSIState {
   messages: WSIMessage[];
   conversationLogs: ConversationLogMessage[];
   screenshots: ScreenshotMessage[];
+  friendlyLogs: FriendlyLogMessage[];  // v2.5: User-friendly status updates
   globalAuthError: string | null;
   clearGlobalAuthError: () => void;
   startGeneration: (config: StartGenerationConfig) => void;
@@ -110,6 +113,9 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
 
   // Per-generation screenshots: Map<request_id, screenshots[]>
   const [screenshotsByGeneration, setScreenshotsByGeneration] = useState<Map<number, ScreenshotMessage[]>>(new Map());
+
+  // Per-generation friendly logs: Map<request_id, friendlyLogs[]> (v2.5)
+  const [friendlyLogsByGeneration, setFriendlyLogsByGeneration] = useState<Map<number, FriendlyLogMessage[]>>(new Map());
 
   // Per-generation state: Map<request_id, GenerationState>
   const [stateByGeneration, setStateByGeneration] = useState<Map<number, GenerationState>>(new Map());
@@ -155,6 +161,16 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
       const newMap = new Map(prev);
       const existing = prev.get(requestId) || [];
       newMap.set(requestId, [...existing, screenshot]);
+      return newMap;
+    });
+  }, []);
+
+  // Helper to add friendly log to a generation (v2.5)
+  const addFriendlyLog = useCallback((requestId: number, log: FriendlyLogMessage) => {
+    setFriendlyLogsByGeneration((prev) => {
+      const newMap = new Map(prev);
+      const existing = prev.get(requestId) || [];
+      newMap.set(requestId, [...existing, log]);
       return newMap;
     });
   }, []);
@@ -330,6 +346,17 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
       }
     );
 
+    // Friendly logs (v2.5: user-friendly status updates for non-dev users)
+    const unsubFriendlyLog = wsiClient.on<FriendlyLogMessage>(
+      'friendly_log',
+      (msg) => {
+        const requestId = msg.request_id;
+        if (requestId !== undefined) {
+          addFriendlyLog(requestId, msg);
+        }
+      }
+    );
+
     // Shutdown initiated - cancellation in progress
     const unsubShutdownInit = wsiClient.on<ShutdownInitiatedMessage>(
       'shutdown_initiated',
@@ -417,13 +444,14 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
       unsubIteration();
       unsubConversation();
       unsubScreenshot();
+      unsubFriendlyLog();  // v2.5
       unsubShutdownInit();
       unsubShutdownReady();
       unsubShutdownFailed();
       unsubShutdownTimeout();
       unsubStopped();
     };
-  }, [updateGenerationState, getGenerationState, addMessage, addConversationLog, addScreenshot]);
+  }, [updateGenerationState, getGenerationState, addMessage, addConversationLog, addScreenshot, addFriendlyLog]);
 
   // Actions
   const startGeneration = useCallback((config: StartGenerationConfig) => {
@@ -448,6 +476,11 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
       return newMap;
     });
     setScreenshotsByGeneration((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(requestId, []);
+      return newMap;
+    });
+    setFriendlyLogsByGeneration((prev) => {
       const newMap = new Map(prev);
       newMap.set(requestId, []);
       return newMap;
@@ -505,6 +538,11 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
         newMap.set(activeGenerationId, []);
         return newMap;
       });
+      setFriendlyLogsByGeneration((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(activeGenerationId, []);
+        return newMap;
+      });
     }
   }, [activeGenerationId]);
 
@@ -530,6 +568,14 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
     return screenshotsByGeneration.get(activeGenerationId) || [];
   }, [activeGenerationId, screenshotsByGeneration]);
 
+  // Friendly logs for non-dev users (v2.5)
+  const friendlyLogs = useMemo(() => {
+    if (activeGenerationId === undefined || activeGenerationId === null) {
+      return [];
+    }
+    return friendlyLogsByGeneration.get(activeGenerationId) || [];
+  }, [activeGenerationId, friendlyLogsByGeneration]);
+
   const activeState = useMemo(() => {
     if (activeGenerationId === undefined || activeGenerationId === null) {
       return defaultGenerationState;
@@ -554,6 +600,7 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
     messages,
     conversationLogs,
     screenshots,
+    friendlyLogs,  // v2.5: User-friendly status updates
     globalAuthError,
     clearGlobalAuthError,
     startGeneration,
@@ -563,4 +610,35 @@ export function useWsi(activeGenerationId?: number | null): UseWsiReturn {
     requestStop,
     clearMessages,
   };
+}
+
+/**
+ * Helper function to filter messages based on user role
+ * - 'dev' and 'admin': See all messages (full terminal output)
+ * - 'user' and 'user_plus': See only friendly_log messages (simple status updates)
+ */
+export function filterMessagesByRole(
+  messages: WSIMessage[],
+  friendlyLogs: FriendlyLogMessage[],
+  userRole: UserRole
+): WSIMessage[] {
+  // Dev and admin see full terminal output
+  if (userRole === 'dev' || userRole === 'admin') {
+    return messages;
+  }
+
+  // User and user_plus see only friendly logs converted to log messages
+  // Plus essential messages (ready, all_work_complete, error, iteration_complete)
+  const essentialTypes = ['ready', 'all_work_complete', 'error', 'iteration_complete', 'progress'];
+  const essentialMessages = messages.filter(m => essentialTypes.includes(m.type));
+
+  // Convert friendly logs to log messages for display
+  const friendlyAsLog: WSIMessage[] = friendlyLogs.map(fl => ({
+    type: 'log' as const,
+    line: `✨ ${fl.message}`,
+    level: 'info',
+    request_id: fl.request_id,
+  }));
+
+  return [...friendlyAsLog, ...essentialMessages];
 }

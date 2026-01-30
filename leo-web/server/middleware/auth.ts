@@ -1,4 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { eq } from 'drizzle-orm';
+import * as schema from '../../shared/schema';
+import { UserRole } from '../../shared/schema.zod';
 
 declare global {
   namespace Express {
@@ -6,16 +11,63 @@ declare global {
       user?: {
         id: string;
         email: string;
-        role?: string;
+        role: UserRole;
         [key: string]: any;
       };
     }
   }
 }
 
+// Lazy-load database connection
+let client: ReturnType<typeof postgres> | null = null;
+let db: ReturnType<typeof drizzle> | null = null;
+
+function getDb() {
+  if (!db) {
+    const connectionString = process.env.LEO_DATABASE_URL_POOLING || process.env.LEO_DATABASE_URL ||
+                             process.env.DATABASE_URL_POOLING || process.env.DATABASE_URL || 'postgresql://placeholder';
+    client = postgres(connectionString, { connect_timeout: 10 });
+    db = drizzle(client, { schema });
+  }
+  return db;
+}
+
 // Cache for validated user tokens (5 minute TTL)
 const tokenCache = new Map<string, { user: any; expires: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Cache for user profiles (role lookup)
+const profileCache = new Map<string, { role: UserRole; expires: number }>();
+const PROFILE_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+/**
+ * Get user role from profiles table (with caching)
+ */
+async function getUserRole(userId: string): Promise<UserRole> {
+  // Check cache first
+  const cached = profileCache.get(userId);
+  if (cached && cached.expires > Date.now()) {
+    return cached.role;
+  }
+
+  try {
+    const [profile] = await getDb()
+      .select({ role: schema.profiles.role })
+      .from(schema.profiles)
+      .where(eq(schema.profiles.id, userId))
+      .limit(1);
+
+    const role = (profile?.role || 'user') as UserRole;
+
+    // Cache the result
+    profileCache.set(userId, { role, expires: Date.now() + PROFILE_CACHE_TTL });
+
+    return role;
+  } catch (error) {
+    console.error('[Auth] Failed to fetch user role from profiles:', error);
+    return 'user'; // Default to most restrictive role
+  }
+}
 
 /**
  * Validate a JWT token directly against Supabase Auth API
@@ -120,10 +172,14 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     console.log(`[Auth Middleware] ✅ User authenticated: ${user.id} (${user.email})`);
 
+    // Get user role from profiles table (not user_metadata)
+    const profileRole = await getUserRole(user.id);
+    console.log(`[Auth Middleware] User role from profiles: ${profileRole}`);
+
     req.user = {
       id: user.id,
       email: user.email!,
-      role: user.user_metadata?.role || 'user',
+      role: profileRole,
       ...user.user_metadata,
     };
 

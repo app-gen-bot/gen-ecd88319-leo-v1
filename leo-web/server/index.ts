@@ -32,6 +32,7 @@ import settingsRoutes from './routes/settings';
 import analyticsRoutes from './routes/analytics';
 import subscriptionsRoutes from './routes/subscriptions';
 import stripeWebhooksRoutes from './routes/stripe-webhooks';
+import assignmentsRoutes from './routes/assignments';
 import { PRICING_TIERS } from './lib/stripe/client.js';
 import { getWSIServer } from './lib/wsi/index.js';
 import { securityHeaders, customSecurityHeaders, blockSensitivePaths } from './middleware/security';
@@ -188,6 +189,7 @@ app.use(transcribeRoutes);
 app.use(feedbackRoutes);
 app.use(profileRoutes);
 app.use(settingsRoutes);
+app.use(assignmentsRoutes);  // App assignments for user role visibility
 app.use('/api/admin/analytics', authMiddleware, analyticsRoutes);
 // Public endpoint for pricing tiers (no auth required)
 app.get('/api/subscriptions/products', (_req, res) => {

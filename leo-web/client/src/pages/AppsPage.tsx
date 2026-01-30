@@ -28,6 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { getAuthToken } from '@/lib/auth-helpers';
+import { useAuth } from '@/contexts/AuthContext';
 import type { GenerationRequestWithApp } from '@shared/schema.zod';
 
 // Grouped app with aggregated data
@@ -48,6 +49,10 @@ type StatusFilter = 'all' | 'generating' | 'completed' | 'failed';
 
 export default function AppsPage() {
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  // Users with 'user' role cannot create new apps (only resume assigned ones)
+  const canCreateApps = profile?.role !== 'user';
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
@@ -255,12 +260,15 @@ export default function AppsPage() {
                 <MessageSquarePlus className="h-4 w-4 mr-2" />
                 Feedback
               </Button>
-              <Link href="/console">
-                <Button className="leo-btn-primary px-5 py-2.5 text-sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New App
-                </Button>
-              </Link>
+              {/* Only show New App button for users who can create apps (not 'user' role) */}
+              {canCreateApps && (
+                <Link href="/console">
+                  <Button className="leo-btn-primary px-5 py-2.5 text-sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New App
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

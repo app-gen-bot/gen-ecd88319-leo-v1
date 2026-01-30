@@ -12,6 +12,10 @@ import {
   UserAppSummary,
   UserFeedback,
   CreateFeedback,
+  AppAssignment,
+  InsertAppAssignment,
+  UpdateAppAssignment,
+  UserRole,
 } from '../../../shared/schema.zod';
 import * as schema from '../../../shared/schema';
 
@@ -643,6 +647,212 @@ class DatabaseStorage implements IStorage {
       }));
     } catch (error) {
       console.error('[Database Storage] GET USER FEEDBACK ERROR:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // ROLE-BASED GENERATION REQUEST OPERATIONS
+  // ============================================================================
+
+  /**
+   * Get generation requests filtered by user role:
+   * - 'user' role: Only sees apps assigned to them via app_assignments
+   * - 'user_plus', 'dev', 'admin': Sees their own apps
+   */
+  async getGenerationRequestsByRole(userId: string, userRole: UserRole): Promise<GenerationRequestWithApp[]> {
+    try {
+      console.log('[Database Storage] Fetching requests for user:', userId, 'role:', userRole);
+
+      if (userRole === 'user') {
+        // User role: Only see apps assigned to them
+        const requests = await getDb()
+          .select({
+            // Generation request fields
+            id: schema.generationRequests.id,
+            appRefId: schema.generationRequests.appRefId,
+            prompt: schema.generationRequests.prompt,
+            status: schema.generationRequests.status,
+            generationType: schema.generationRequests.generationType,
+            createdAt: schema.generationRequests.createdAt,
+            updatedAt: schema.generationRequests.updatedAt,
+            completedAt: schema.generationRequests.completedAt,
+            errorMessage: schema.generationRequests.errorMessage,
+            mode: schema.generationRequests.mode,
+            initialPrompt: schema.generationRequests.initialPrompt,
+            maxIterations: schema.generationRequests.maxIterations,
+            currentIteration: schema.generationRequests.currentIteration,
+            lastSessionId: schema.generationRequests.lastSessionId,
+            githubCommit: schema.generationRequests.githubCommit,
+            totalCost: schema.generationRequests.totalCost,
+            totalDuration: schema.generationRequests.totalDuration,
+            warnings: schema.generationRequests.warnings,
+            iterationData: schema.generationRequests.iterationData,
+            poolIndex: schema.generationRequests.poolIndex,
+            attachments: schema.generationRequests.attachments,
+            // App fields (joined)
+            userId: schema.apps.userId,
+            appName: schema.apps.appName,
+            appUuid: schema.apps.appUuid,
+            githubUrl: schema.apps.githubUrl,
+            deploymentUrl: schema.apps.deploymentUrl,
+            cumulativeCost: schema.apps.cumulativeCost,
+          })
+          .from(schema.generationRequests)
+          .innerJoin(schema.apps, eq(schema.generationRequests.appRefId, schema.apps.id))
+          .innerJoin(schema.appAssignments, eq(schema.apps.id, schema.appAssignments.appId))
+          .where(eq(schema.appAssignments.userId, userId))
+          .orderBy(desc(schema.generationRequests.createdAt));
+
+        console.log(`[Database Storage] Found ${requests.length} assigned requests for 'user' role`);
+
+        return requests.map(r => ({
+          ...r,
+          createdAt: r.createdAt.toISOString(),
+          updatedAt: r.updatedAt.toISOString(),
+          completedAt: r.completedAt ? r.completedAt.toISOString() : null,
+          warnings: r.warnings as GenerationRequestWithApp['warnings'],
+          iterationData: r.iterationData as GenerationRequestWithApp['iterationData'],
+          attachments: r.attachments as GenerationRequestWithApp['attachments'],
+        }));
+      }
+
+      // user_plus, dev, admin: See their own apps (existing behavior)
+      return this.getGenerationRequests(userId);
+    } catch (error) {
+      console.error('[Database Storage] GET GENERATION REQUESTS BY ROLE ERROR:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // APP ASSIGNMENT OPERATIONS
+  // ============================================================================
+
+  /**
+   * Get all app assignments for a user (what apps are assigned to them)
+   */
+  async getAppAssignments(userId: string): Promise<AppAssignment[]> {
+    try {
+      console.log('[Database Storage] Fetching app assignments for user:', userId);
+
+      const assignments = await getDb()
+        .select()
+        .from(schema.appAssignments)
+        .where(eq(schema.appAssignments.userId, userId));
+
+      console.log(`[Database Storage] Found ${assignments.length} app assignments`);
+
+      return assignments.map(a => ({
+        ...a,
+        assignedAt: a.assignedAt.toISOString(),
+      }));
+    } catch (error) {
+      console.error('[Database Storage] GET APP ASSIGNMENTS ERROR:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all users assigned to an app (for admin management)
+   */
+  async getAppAssignmentsByApp(appId: number): Promise<AppAssignment[]> {
+    try {
+      console.log('[Database Storage] Fetching assignments for app:', appId);
+
+      const assignments = await getDb()
+        .select()
+        .from(schema.appAssignments)
+        .where(eq(schema.appAssignments.appId, appId));
+
+      console.log(`[Database Storage] Found ${assignments.length} assignments for app`);
+
+      return assignments.map(a => ({
+        ...a,
+        assignedAt: a.assignedAt.toISOString(),
+      }));
+    } catch (error) {
+      console.error('[Database Storage] GET APP ASSIGNMENTS BY APP ERROR:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign an app to a user
+   */
+  async createAppAssignment(assignment: InsertAppAssignment): Promise<AppAssignment> {
+    try {
+      console.log('[Database Storage] Creating app assignment:', assignment);
+
+      const [newAssignment] = await getDb()
+        .insert(schema.appAssignments)
+        .values({
+          appId: assignment.appId,
+          userId: assignment.userId,
+          assignedBy: assignment.assignedBy || null,
+          canResume: assignment.canResume || false,
+        })
+        .returning();
+
+      console.log(`[Database Storage] App assignment created: ID ${newAssignment.id}`);
+
+      return {
+        ...newAssignment,
+        assignedAt: newAssignment.assignedAt.toISOString(),
+      };
+    } catch (error) {
+      console.error('[Database Storage] CREATE APP ASSIGNMENT ERROR:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an app assignment (e.g., change canResume permission)
+   */
+  async updateAppAssignment(id: number, updates: UpdateAppAssignment): Promise<AppAssignment | null> {
+    try {
+      console.log('[Database Storage] Updating app assignment:', id, updates);
+
+      const [updated] = await getDb()
+        .update(schema.appAssignments)
+        .set(updates)
+        .where(eq(schema.appAssignments.id, id))
+        .returning();
+
+      if (!updated) return null;
+
+      console.log(`[Database Storage] App assignment updated: ID ${updated.id}`);
+
+      return {
+        ...updated,
+        assignedAt: updated.assignedAt.toISOString(),
+      };
+    } catch (error) {
+      console.error('[Database Storage] UPDATE APP ASSIGNMENT ERROR:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove an app assignment
+   */
+  async deleteAppAssignment(appId: number, userId: string): Promise<boolean> {
+    try {
+      console.log('[Database Storage] Deleting app assignment:', appId, userId);
+
+      await getDb()
+        .delete(schema.appAssignments)
+        .where(
+          and(
+            eq(schema.appAssignments.appId, appId),
+            eq(schema.appAssignments.userId, userId)
+          )
+        );
+
+      console.log(`[Database Storage] App assignment deleted`);
+      return true;
+    } catch (error) {
+      console.error('[Database Storage] DELETE APP ASSIGNMENT ERROR:', error);
       throw error;
     }
   }

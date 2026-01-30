@@ -8,6 +8,10 @@ import {
   UserAppSummary,
   UserFeedback,
   CreateFeedback,
+  AppAssignment,
+  InsertAppAssignment,
+  UpdateAppAssignment,
+  UserRole,
 } from '../../../shared/schema.zod';
 import { databaseStorage } from './database-storage';
 
@@ -37,6 +41,8 @@ export interface IStorage {
   // Note: getGenerationRequests and getGenerationRequestById return GenerationRequestWithApp
   // which includes denormalized fields from apps table for API compatibility
   getGenerationRequests(userId: string): Promise<GenerationRequestWithApp[]>;
+  // Role-aware version: filters by role (user role sees only assigned apps)
+  getGenerationRequestsByRole(userId: string, userRole: UserRole): Promise<GenerationRequestWithApp[]>;
   getGenerationRequestById(id: number): Promise<GenerationRequestWithApp | null>;
   getGenerationsByAppId(appId: number): Promise<GenerationRequestWithApp[]>;
   createGenerationRequest(request: InsertGenerationRequest): Promise<GenerationRequest>;
@@ -45,6 +51,13 @@ export interface IStorage {
   // Multi-generation support
   getActiveGenerations(userId: string): Promise<GenerationRequestWithApp[]>;
   countActiveGenerations(userId: string): Promise<number>;
+
+  // App assignment operations (for 'user' role visibility)
+  getAppAssignments(userId: string): Promise<AppAssignment[]>;
+  getAppAssignmentsByApp(appId: number): Promise<AppAssignment[]>;
+  createAppAssignment(assignment: InsertAppAssignment): Promise<AppAssignment>;
+  updateAppAssignment(id: number, updates: UpdateAppAssignment): Promise<AppAssignment | null>;
+  deleteAppAssignment(appId: number, userId: string): Promise<boolean>;
 
   // Note: Iteration snapshot operations removed - table dropped
 

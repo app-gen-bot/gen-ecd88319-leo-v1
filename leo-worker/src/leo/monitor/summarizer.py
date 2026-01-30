@@ -4,6 +4,8 @@ Process Monitor Summarizer - AI-powered trajectory analysis.
 Uses GPT-4o-mini to analyze agent activity and assess trajectory quality.
 Provides both a summary of what happened and efficiency scoring.
 
+Also provides FriendlySummarizer for user-friendly status messages (non-dev users).
+
 Cost: ~$0.001 per analysis (very cheap)
 """
 
@@ -23,7 +25,7 @@ OPENAI_MODEL = "gpt-4o-mini"
 # Maximum tokens for output
 MAX_OUTPUT_TOKENS = 600
 
-# System prompt for trajectory analysis
+# System prompt for trajectory analysis (dev mode)
 ANALYZER_SYSTEM_PROMPT = """You are an agent trajectory analyzer. Given agent activity logs, analyze efficiency and summarize progress.
 
 Output JSON only with this structure:
@@ -204,3 +206,192 @@ class HaikuAnalyzer:
         """Reset cumulative cost and token counters (call at generation start)."""
         self._cumulative_cost = 0.0
         self._cumulative_tokens = {"input": 0, "output": 0}
+
+
+# System prompt for user-friendly summaries (non-dev users)
+FRIENDLY_SUMMARIZER_PROMPT = """You are a friendly assistant summarizing app building progress for non-technical users.
+
+Given agent activity logs, create a SHORT, FRIENDLY message about what's happening.
+
+Output JSON only with this structure:
+{
+  "message": "A single friendly sentence about current progress (max 15 words)",
+  "category": "setup|planning|building|testing|deploying|working"
+}
+
+RULES:
+- Keep it simple and positive
+- NO technical jargon (no "tokens", "API", "schema", "database", "commit", "migration", "endpoint")
+- NO AI/model references (no "agent", "Claude", "GPT", "LLM", "AI")
+- Use friendly language like "Setting things up...", "Building your features...", "Almost there!"
+- Category must match: setup (initializing), planning (designing), building (coding), testing (verifying), deploying (publishing), working (general progress)
+
+EXAMPLE OUTPUTS:
+{"message": "Getting everything ready for your app...", "category": "setup"}
+{"message": "Designing your app's structure...", "category": "planning"}
+{"message": "Building your features...", "category": "building"}
+{"message": "Making sure everything works correctly...", "category": "testing"}
+{"message": "Publishing your app online...", "category": "deploying"}
+{"message": "Making progress on your app...", "category": "working"}"""
+
+
+@dataclass
+class FriendlyUpdate:
+    """User-friendly status update for non-dev users."""
+    generation_id: Optional[str]
+    message: str  # User-friendly message
+    category: str  # "setup" | "planning" | "building" | "testing" | "deploying" | "working"
+    timestamp: str  # ISO timestamp
+
+
+class FriendlySummarizer:
+    """
+    Generates user-friendly status messages from agent activity.
+
+    For non-developer users who don't need technical details.
+    Uses GPT-4o-mini for cheap, fast summarization.
+
+    Cost: ~$0.001 per summary
+    Latency: ~1-2 seconds
+    """
+
+    def __init__(self, api_key: Optional[str] = None):
+        """
+        Initialize friendly summarizer.
+
+        Args:
+            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+        """
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self._client = None
+
+    def _get_client(self):
+        """Lazy-load OpenAI client."""
+        if self._client is None:
+            try:
+                import openai
+                self._client = openai.OpenAI(api_key=self.api_key)
+            except ImportError:
+                logger.error("openai package not installed")
+                raise
+        return self._client
+
+    def summarize(self, batch: LogBatch) -> Optional[FriendlyUpdate]:
+        """
+        Generate a user-friendly summary from a batch of log entries.
+
+        Args:
+            batch: LogBatch containing entries to summarize
+
+        Returns:
+            FriendlyUpdate object or None if summarization fails/skipped
+        """
+        if not batch.entries:
+            return None
+
+        if not self.api_key:
+            logger.warning("No OpenAI API key - skipping friendly summary")
+            return self._fallback_summary(batch)
+
+        try:
+            # Prepare simplified log content
+            log_content = self._format_entries_simplified(batch.entries)
+
+            # Call GPT-4o-mini
+            client = self._get_client()
+            response = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                max_tokens=100,  # Short responses only
+                messages=[
+                    {"role": "system", "content": FRIENDLY_SUMMARIZER_PROMPT},
+                    {"role": "user", "content": f"Summarize this progress:\n\n{log_content}"}
+                ]
+            )
+
+            # Parse response
+            response_text = response.choices[0].message.content
+            data = json.loads(response_text)
+
+            return FriendlyUpdate(
+                generation_id=batch.generation_id,
+                message=data.get("message", "Working on your app..."),
+                category=data.get("category", "working"),
+                timestamp=batch.window_end.isoformat() + "Z"
+            )
+
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse friendly summary response: {e}")
+            return self._fallback_summary(batch)
+        except Exception as e:
+            logger.error(f"Friendly summarization failed: {e}")
+            return self._fallback_summary(batch)
+
+    def _format_entries_simplified(self, entries: list) -> str:
+        """Format log entries in a simplified way for friendly summary."""
+        lines = []
+        for e in entries:
+            entry_type = e.get("type", "unknown")
+
+            if entry_type == "assistant_message":
+                tools = e.get("tool_uses", [])
+                tool_names = [t.get("name", "?") for t in tools]
+                # Map technical tool names to friendly activities
+                for tool in tool_names:
+                    if tool in ("Read", "Glob", "Grep"):
+                        lines.append("Looking at files")
+                    elif tool in ("Write", "Edit"):
+                        lines.append("Writing code")
+                    elif tool == "Bash":
+                        lines.append("Running commands")
+                    elif "test" in tool.lower():
+                        lines.append("Testing")
+                    elif "build" in tool.lower():
+                        lines.append("Building")
+
+            elif entry_type == "result":
+                success = e.get("success", False)
+                if success:
+                    lines.append("Completed a task")
+
+        # Deduplicate and limit
+        unique_lines = list(dict.fromkeys(lines))[:10]
+        return "\n".join(unique_lines) if unique_lines else "Working..."
+
+    def _fallback_summary(self, batch: LogBatch) -> FriendlyUpdate:
+        """Generate a fallback summary when API is unavailable."""
+        # Analyze entries to pick appropriate message
+        has_writes = False
+        has_tests = False
+        has_bash = False
+
+        for e in batch.entries:
+            tools = e.get("tool_uses", [])
+            for tool in tools:
+                tool_name = tool.get("name", "")
+                if tool_name in ("Write", "Edit"):
+                    has_writes = True
+                elif "test" in tool_name.lower():
+                    has_tests = True
+                elif tool_name == "Bash":
+                    has_bash = True
+
+        # Pick message based on activity
+        if has_tests:
+            message = "Making sure everything works correctly..."
+            category = "testing"
+        elif has_writes:
+            message = "Building your features..."
+            category = "building"
+        elif has_bash:
+            message = "Setting things up..."
+            category = "setup"
+        else:
+            message = "Working on your app..."
+            category = "working"
+
+        return FriendlyUpdate(
+            generation_id=batch.generation_id,
+            message=message,
+            category=category,
+            timestamp=batch.window_end.isoformat() + "Z"
+        )

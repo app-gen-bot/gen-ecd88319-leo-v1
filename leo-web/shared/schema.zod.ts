@@ -4,7 +4,12 @@ import { z } from 'zod';
 // USER ROLE AND STATUS ENUMS (for gated beta signup)
 // ============================================================================
 
-export const userRoleEnum = z.enum(['user', 'dev', 'admin']);
+// User roles:
+// - user: Restricted role, sees friendly logs only, NO app creation, sees ONLY assigned apps
+// - user_plus: Standard role, sees friendly logs, CAN create apps, sees own apps
+// - dev: Developer role, sees full terminal logs, CAN create apps, sees own apps
+// - admin: Full access, can assign apps to users
+export const userRoleEnum = z.enum(['user', 'user_plus', 'dev', 'admin']);
 export const userStatusEnum = z.enum(['pending_approval', 'approved', 'rejected', 'suspended']);
 export const creditTransactionTypeEnum = z.enum(['grant', 'deduction', 'refund', 'adjustment']);
 export const subscriptionTierEnum = z.enum(['free', 'pro', 'enterprise']);
@@ -192,6 +197,31 @@ export const userAppSummarySchema = z.object({
   generationCount: z.number().optional(), // How many times resumed
   lastStatus: z.string().optional(), // Status of most recent generation
   cumulativeCost: z.string().nullable().optional(), // Total cost across all generations
+});
+
+// ============================================================================
+// APP ASSIGNMENTS - Assigns apps to users with 'user' role
+// ============================================================================
+// Users with 'user' role can only see apps that are explicitly assigned to them.
+
+export const appAssignmentSchema = z.object({
+  id: z.number(),
+  appId: z.number(),
+  userId: z.string().uuid(),
+  assignedBy: z.string().uuid().nullable(), // Admin/dev who assigned
+  canResume: z.boolean(), // Whether user can resume/modify the app
+  assignedAt: z.string().datetime(),
+});
+
+export const insertAppAssignmentSchema = appAssignmentSchema.omit({
+  id: true,
+  assignedAt: true,
+}).extend({
+  canResume: z.boolean().default(false),
+});
+
+export const updateAppAssignmentSchema = z.object({
+  canResume: z.boolean().optional(),
 });
 
 // ============================================================================
@@ -469,6 +499,11 @@ export type App = z.infer<typeof appSchema>;
 export type InsertApp = z.infer<typeof insertAppSchema>;
 export type UpdateApp = z.infer<typeof updateAppSchema>;
 export type UserAppSummary = z.infer<typeof userAppSummarySchema>;
+
+// App assignment types
+export type AppAssignment = z.infer<typeof appAssignmentSchema>;
+export type InsertAppAssignment = z.infer<typeof insertAppAssignmentSchema>;
+export type UpdateAppAssignment = z.infer<typeof updateAppAssignmentSchema>;
 
 export type GenerationStatus = z.infer<typeof generationStatusEnum>;
 export type GenerationMode = z.infer<typeof generationModeEnum>;

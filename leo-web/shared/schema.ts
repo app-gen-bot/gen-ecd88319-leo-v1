@@ -11,7 +11,12 @@ export const feedbackTypeEnum = pgEnum('feedback_type', ['feature_request', 'bug
 export const feedbackStatusEnum = pgEnum('feedback_status', ['new', 'reviewed', 'in_progress', 'resolved', 'closed']);
 
 // User role and status enums for gated beta signup
-export const userRoleEnum = pgEnum('user_role', ['user', 'dev', 'admin']);
+// Roles:
+// - user: Restricted role, sees friendly logs only, NO app creation, sees ONLY assigned apps
+// - user_plus: Standard role, sees friendly logs, CAN create apps, sees own apps
+// - dev: Developer role, sees full terminal logs, CAN create apps, sees own apps
+// - admin: Full access, can assign apps to users
+export const userRoleEnum = pgEnum('user_role', ['user', 'user_plus', 'dev', 'admin']);
 export const userStatusEnum = pgEnum('user_status', ['pending_approval', 'approved', 'rejected', 'suspended']);
 
 // Credit transaction type enum
@@ -121,6 +126,25 @@ export const apps = pgTable('apps', {
   userIdIdx: index('apps_user_id_idx').on(table.userId),
   appUuidIdx: index('apps_app_uuid_idx').on(table.appUuid),
   userAppUnique: unique('apps_user_app_unique').on(table.userId, table.appName),
+}));
+
+// ============================================================================
+// APP ASSIGNMENTS TABLE - Assigns apps to users with 'user' role
+// ============================================================================
+// Users with 'user' role can only see apps that are explicitly assigned to them.
+// This enables admins/devs to share specific apps with restricted users.
+
+export const appAssignments = pgTable('app_assignments', {
+  id: serial('id').primaryKey(),
+  appId: integer('app_id').notNull().references(() => apps.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  assignedBy: uuid('assigned_by').references(() => profiles.id), // Admin/dev who assigned
+  canResume: boolean('can_resume').notNull().default(false), // Whether user can resume/modify the app
+  assignedAt: timestamp('assigned_at').notNull().defaultNow(),
+}, (table) => ({
+  appUserUnique: unique('app_assignments_app_user_unique').on(table.appId, table.userId),
+  userIdIdx: index('app_assignments_user_id_idx').on(table.userId),
+  appIdIdx: index('app_assignments_app_id_idx').on(table.appId),
 }));
 
 // ============================================================================

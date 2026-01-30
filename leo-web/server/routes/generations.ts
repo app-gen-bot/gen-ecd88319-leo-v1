@@ -484,6 +484,9 @@ router.get('/api/generations/active', authMiddleware, async (req: Request, res: 
 // ============================================================================
 // GET /api/generations - List user's generation requests
 // ============================================================================
+// Role-based filtering:
+// - 'user' role: Only sees apps assigned to them via app_assignments table
+// - 'user_plus', 'dev', 'admin': Sees their own apps
 router.get('/api/generations', authMiddleware, async (req: Request, res: Response) => {
   try {
     // If no user is authenticated, return empty array
@@ -492,9 +495,11 @@ router.get('/api/generations', authMiddleware, async (req: Request, res: Respons
       return res.status(200).json([]);
     }
 
-    console.log('[Generations Route] List requests for user:', req.user.id);
+    const userRole = (req.user.role || 'user') as import('../../shared/schema.zod').UserRole;
+    console.log('[Generations Route] List requests for user:', req.user.id, 'role:', userRole);
 
-    const requests = await storage.getGenerationRequests(req.user.id);
+    // Use role-aware query
+    const requests = await storage.getGenerationRequestsByRole(req.user.id, userRole);
 
     console.log('[Generations Route] Found requests:', requests.length);
     res.status(200).json(requests);

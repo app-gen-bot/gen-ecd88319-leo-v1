@@ -7,11 +7,14 @@ import { LayoutGrid, Terminal, Menu, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => location === path;
+
+  // Users with 'user' role cannot create new apps - hide Console nav
+  const canCreateApps = profile?.role !== 'user';
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -50,19 +53,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     My Apps
                   </Button>
                 </Link>
-                <Link href="/console">
-                  <Button
-                    variant="ghost"
-                    className={`flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-11 px-4 rounded-lg ${
-                      isActive('/console') || location.startsWith('/console/')
-                        ? 'text-accent bg-accent/10'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <Terminal className="h-4 w-4" />
-                    Console
-                  </Button>
-                </Link>
+                {/* Only show Console nav for users who can create apps (not 'user' role) */}
+                {canCreateApps && (
+                  <Link href="/console">
+                    <Button
+                      variant="ghost"
+                      className={`flex items-center gap-2 text-sm font-medium transition-all duration-200 min-h-11 px-4 rounded-lg ${
+                        isActive('/console') || location.startsWith('/console/')
+                          ? 'text-accent bg-accent/10'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      <Terminal className="h-4 w-4" />
+                      Console
+                    </Button>
+                  </Link>
+                )}
                 <div className="ml-2 pl-4 border-l border-border">
                   <UserMenu />
                 </div>
@@ -120,19 +126,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       My Apps
                     </Button>
                   </Link>
-                  <Link href="/console" onClick={() => setMobileMenuOpen(false)}>
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start gap-3 min-h-12 text-base ${
-                        isActive('/console')
-                          ? 'text-accent bg-accent/10'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      <Terminal className="h-5 w-5" />
-                      Console
-                    </Button>
-                  </Link>
+                  {/* Only show Console nav for users who can create apps (not 'user' role) */}
+                  {canCreateApps && (
+                    <Link href="/console" onClick={() => setMobileMenuOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start gap-3 min-h-12 text-base ${
+                          isActive('/console')
+                            ? 'text-accent bg-accent/10'
+                            : 'text-muted-foreground'
+                        }`}
+                      >
+                        <Terminal className="h-5 w-5" />
+                        Console
+                      </Button>
+                    </Link>
+                  )}
                   <div className="pt-2 border-t border-border">
                     <UserMenu />
                   </div>

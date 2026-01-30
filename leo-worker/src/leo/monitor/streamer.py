@@ -4,8 +4,8 @@ Process Monitor Streamer - Integrates collector and analyzer with WSI.
 Orchestrates the full flow:
 1. Receives conversation log entries via callback
 2. Buffers them in LogCollector
-3. Periodically analyzes with HaikuAnalyzer
-4. Emits process_monitor messages via WSI
+3. Periodically analyzes with HaikuAnalyzer (for devs) and FriendlySummarizer (for users)
+4. Emits process_monitor messages (devs) and friendly_log messages (users) via WSI
 5. Writes analysis to artifacts log file
 """
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
 from .collector import LogCollector, LogBatch
-from .summarizer import HaikuAnalyzer, TrajectoryAnalysis
+from .summarizer import HaikuAnalyzer, TrajectoryAnalysis, FriendlySummarizer, FriendlyUpdate
 
 if TYPE_CHECKING:
     pass  # Avoid circular import with wsi client
@@ -27,6 +27,10 @@ logger = logging.getLogger(__name__)
 class ProcessMonitorStreamer:
     """
     Orchestrates log collection, trajectory analysis, and WSI streaming.
+
+    Emits both:
+    - process_monitor messages (for dev users) with trajectory analysis
+    - friendly_log messages (for user/user_plus) with simple status updates
 
     Usage:
         streamer = ProcessMonitorStreamer(wsi_client)
@@ -58,6 +62,7 @@ class ProcessMonitorStreamer:
         self.wsi_client = wsi_client
         self.collector = LogCollector(batch_interval_seconds=batch_interval_seconds)
         self.analyzer = HaikuAnalyzer(api_key=api_key)
+        self.friendly_summarizer = FriendlySummarizer(api_key=api_key)
 
         self._running = False
         self._generation_id: Optional[str] = None
@@ -115,14 +120,18 @@ class ProcessMonitorStreamer:
         Handle a batch ready for analysis.
 
         Called by LogCollector when batch interval elapses.
-        Runs analysis and sends WSI message.
+        Runs both trajectory analysis (devs) and friendly summary (users).
         """
         try:
-            # Analyze the batch
+            # Analyze for dev mode (trajectory analysis)
             analysis = self.analyzer.analyze(batch)
             if analysis:
-                # Schedule WSI send (we're in sync context from collector callback)
                 asyncio.create_task(self._send_analysis(analysis))
+
+            # Generate friendly summary for user mode
+            friendly = self.friendly_summarizer.summarize(batch)
+            if friendly:
+                asyncio.create_task(self._send_friendly_update(friendly))
         except Exception as e:
             logger.error(f"Failed to process batch: {e}")
 
@@ -159,6 +168,25 @@ class ProcessMonitorStreamer:
 
         except Exception as e:
             logger.error(f"Failed to send process_monitor via WSI: {e}")
+
+    async def _send_friendly_update(self, friendly: FriendlyUpdate) -> None:
+        """Send friendly log update via WSI."""
+        try:
+            # Build the friendly_log message
+            message = {
+                "type": "friendly_log",
+                "message": friendly.message,
+                "category": friendly.category,
+                "timestamp": friendly.timestamp,
+                "generation_id": friendly.generation_id
+            }
+
+            # Send via WSI
+            await self.wsi_client._send_raw_message(message)
+            logger.info(f"Sent friendly_log: {friendly.message} (category={friendly.category})")
+
+        except Exception as e:
+            logger.error(f"Failed to send friendly_log via WSI: {e}")
 
 
 # Global instance for easy access (set by WSI client)

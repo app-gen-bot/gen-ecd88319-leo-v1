@@ -134,6 +134,15 @@ export interface ScreenshotMessage extends WSIMessage {
   stage?: string;  // Generation stage (e.g., "quality_assurance", "iteration_1")
 }
 
+// User-friendly status update for non-developer users (v2.5)
+export interface FriendlyLogMessage extends WSIMessage {
+  type: 'friendly_log';
+  message: string;  // User-friendly message (e.g., "Building your features...")
+  category: string;  // "setup" | "planning" | "building" | "testing" | "deploying" | "done" | "working"
+  timestamp: string;  // ISO timestamp
+  generation_id?: string;
+}
+
 // ============================================================================
 // CREDENTIAL REQUEST/RESPONSE (v2.2)
 // ============================================================================
@@ -262,6 +271,7 @@ export type WSIEventType =
   | 'disconnected'
   | 'ready'
   | 'log'
+  | 'friendly_log'  // v2.5: User-friendly status updates for non-dev users
   | 'progress'
   | 'iteration_complete'
   | 'all_work_complete'

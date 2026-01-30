@@ -38,7 +38,7 @@ function getProfileDb() {
  * Returns role and tokens (Claude OAuth and Supabase access token if configured)
  */
 async function getUserProfileForToken(userId: string): Promise<{
-  role: 'user' | 'dev' | 'admin';
+  role: 'user' | 'user_plus' | 'dev' | 'admin';
   claudeOauthToken: string | null;
   supabaseAccessToken: string | null;
 } | null> {
