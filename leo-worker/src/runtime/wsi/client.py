@@ -2178,14 +2178,6 @@ class WSIClient:
                 logger.info(f"Reprompter suggests: {next_prompt[:LOG_TRUNCATE_PROMPT_REPROMPTER]}{'...' if len(next_prompt) > LOG_TRUNCATE_PROMPT_REPROMPTER else ''}")
                 await self._send_message(create_log_message(f"Next task: {next_prompt[:LOG_TRUNCATE_PROMPT_MESSAGE]}{'...' if len(next_prompt) > LOG_TRUNCATE_PROMPT_MESSAGE else ''}", "info"))
 
-                # Check if reprompter signals completion (DONE)
-                prompt_upper = next_prompt.strip().upper()
-                if prompt_upper == "DONE" or prompt_upper.startswith("DONE"):
-                    logger.info("Reprompter signaled DONE - finishing generation")
-                    await self._send_message(create_log_message("✅ Generation complete - reprompter signaled DONE", "info"))
-                    await self._finish_generation("completed", app_path)
-                    return
-
                 # Save iteration prompt to artifacts
                 if self.prompt_saver:
                     try:
