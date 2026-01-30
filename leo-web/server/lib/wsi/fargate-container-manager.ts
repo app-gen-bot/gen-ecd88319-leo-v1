@@ -122,7 +122,7 @@ export class FargateContainerManager extends EventEmitter implements IContainerM
   async spawnContainer(config: ContainerSpawnConfig): Promise<string> {
     const {
       requestId,
-      prompt,
+      prompt: _prompt, // Intentionally unused - sent via WSI start_generation message, not env var
       mode,
       maxIterations,
       appName,
